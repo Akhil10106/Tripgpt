@@ -23,30 +23,56 @@
         .theme-3 { background: #d1fae5; color: #047857; }
         .theme-default { background: #f1f5f9; color: #475569; }
         .badge-admin { background: #ef4444; color: white; padding: 2px 8px; border-radius: 6px; font-size: 9px; text-transform: uppercase; font-weight: 800; }
-        .badge-profile-admin { background: #1e293b; color: #fbbf24; border: 1px solid #fbbf24; padding: 6px 16px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        .badge-profile-member { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 6px 16px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
         .collapse-content { display: none; }
+        
+        #member-info-modal { display: none; }
+        .modal-pop { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .id-badge { cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .id-badge:hover { color: #4f46e5; background: #eef2ff; border-radius: 4px; padding: 0 4px; }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
+    <div id="member-info-modal" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="silk-card max-w-sm w-full p-8 modal-pop relative flex flex-col max-h-[80vh]">
+            <button onclick="closeMemberModal()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-colors"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            <div class="text-center mb-6">
+                <img id="modal-member-img" src="" class="w-24 h-24 rounded-3xl mx-auto border-4 border-white shadow-xl mb-4 object-cover">
+                <h2 id="modal-member-name" class="text-2xl font-black text-slate-900">...</h2>
+                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Trip Member</p>
+            </div>
+            <div class="bg-slate-50 p-5 rounded-2xl mb-6 text-center">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Total Contribution</p>
+                <p id="modal-member-balance" class="text-3xl font-black text-slate-800">₹0</p>
+            </div>
+            <button onclick="toggleMemberHistory()" id="history-toggle-btn" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all">
+                View Timeline
+            </button>
+            <div id="modal-history-pane" class="hidden mt-6 overflow-y-auto pr-2"><div id="modal-history-list" class="space-y-2"></div></div>
+        </div>
+    </div>
+
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6 overflow-y-auto">
         <div id="login-container" class="text-center max-w-sm w-full">
             <h1 class="text-5xl font-black tracking-tighter text-slate-900 mb-2">TRIP<span class="text-indigo-600">SPLIT</span></h1>
-            <p class="mb-8 text-slate-400 font-medium">Secure Multi-Group Cloud</p>
+            <p class="text-slate-400 font-bold mb-8">Personal Expense Cloud</p>
             <button id="google-login" class="bg-white border border-slate-200 flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Continue with Google
             </button>
         </div>
-
         <div id="group-discovery" class="hidden w-full max-w-md">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-black">My Circles</h2>
                 <button onclick="signOutNow()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-lg">Logout</button>
             </div>
-            <div id="my-groups-list" class="space-y-4 mb-10"></div>
-            <div class="silk-card p-6 bg-indigo-600 text-white flex gap-2">
-                <button onclick="showJoinManual()" class="flex-1 bg-white/10 py-3 rounded-xl font-bold text-xs uppercase">Join ID</button>
+            <div id="my-groups-list" class="space-y-4 mb-6"></div>
+            <div id="recycle-bin-section" class="hidden mb-10 border-t pt-6">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recently Left</h4>
+                <div id="recycle-list" class="space-y-3"></div>
+            </div>
+            <div class="silk-card p-6 bg-indigo-600 text-white flex gap-2 shadow-xl">
+                <button onclick="showJoinManual()" class="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-xs uppercase">Join ID</button>
                 <button onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-3 rounded-xl font-bold text-xs uppercase">Create New</button>
             </div>
         </div>
@@ -54,27 +80,20 @@
 
     <div id="join-modal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6">
         <div class="silk-card p-8 max-w-sm w-full text-center">
-            <h3 class="text-xl font-black mb-4">Enter Circle ID</h3>
-            <input type="text" id="manual-id" placeholder="ID CODE" class="w-full p-4 bg-slate-50 rounded-xl font-black text-center mb-4 uppercase outline-none focus:ring-2 ring-indigo-500/20">
+            <h3 class="text-xl font-black mb-4">Join Circle</h3>
+            <input type="text" id="manual-id" placeholder="ID CODE" class="w-full p-4 bg-slate-50 rounded-xl font-black text-center mb-4 uppercase outline-none">
             <div class="flex gap-2">
                 <button onclick="document.getElementById('join-modal').classList.add('hidden')" class="flex-1 font-bold text-slate-400">Cancel</button>
-                <button onclick="joinGroupManual()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black">Request Entry</button>
+                <button onclick="joinGroupManual()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black">Join</button>
             </div>
         </div>
     </div>
 
     <div id="creation-popup" class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6 overflow-y-auto">
         <div class="silk-card p-8 max-w-lg w-full my-auto">
-            <h2 class="text-2xl font-black mb-6">Create New Circle</h2>
-            <input type="text" id="pop-group-name" placeholder="Circle Name" class="w-full bg-slate-50 p-4 rounded-xl font-bold mb-6 outline-none">
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Add Friends to Initial List</label>
-            <div id="pop-member-list" class="space-y-2 mb-4"></div>
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <input type="text" id="pop-name" placeholder="Name" class="bg-slate-50 p-4 rounded-xl font-bold outline-none">
-                <input type="email" id="pop-email" placeholder="Gmail ID" class="bg-slate-50 p-4 rounded-xl font-bold outline-none">
-            </div>
-            <button onclick="addMemberToPop()" class="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl font-bold text-slate-400 mb-6 hover:bg-slate-50">+ Add Friend</button>
-            <button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl">Launch Circle</button>
+            <h2 class="text-2xl font-black mb-6 text-slate-800">New Workspace</h2>
+            <input type="text" id="pop-group-name" placeholder="Circle Name" class="w-full bg-slate-50 p-4 rounded-xl font-bold mb-6 outline-none focus:ring-2 ring-indigo-500/20">
+            <button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all">Launch Space</button>
         </div>
     </div>
 
@@ -84,12 +103,12 @@
                 <img id="user-photo" src="" class="w-14 h-14 rounded-2xl border-2 border-white shadow-xl transition-transform group-hover:scale-105">
                 <div>
                     <h2 class="text-xl font-extrabold text-slate-900 leading-none" id="display-group-name">...</h2>
-                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1" id="display-group-id"></p>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1 id-badge" id="display-group-id" onclick="copyGroupId()">...</p>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-slate-100 hover:bg-slate-50">Home</button>
-                <button onclick="location.reload()" class="bg-slate-100 px-6 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200">Switch Circle</button>
+                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-slate-100 hover:bg-slate-50 transition-all">Home</button>
+                <button onclick="location.reload()" class="bg-slate-100 px-6 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all">Switch</button>
                 <button onclick="showView('settings-page')" class="bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg"><i class="fa-solid fa-sliders"></i></button>
             </div>
         </header>
@@ -98,13 +117,13 @@
             <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"></div>
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div class="lg:col-span-5">
-                    <div class="silk-card p-8 sticky top-10">
-                        <h3 class="text-lg font-black mb-8 text-slate-800 italic">Log Expense</h3>
+                    <div class="silk-card p-8 sticky top-10 border-slate-100">
+                        <h3 class="text-lg font-black mb-8 text-slate-800 italic text-center uppercase tracking-widest">Log Expense</h3>
                         <div class="space-y-6">
                             <input type="text" id="bill-title" placeholder="Description" class="w-full bg-slate-50 rounded-2xl p-4 font-bold outline-none">
                             <div class="relative"><span class="absolute left-4 top-4 text-slate-400 font-black">₹</span><input type="number" id="bill-amount" placeholder="0.00" class="w-full bg-slate-50 rounded-2xl p-4 pl-10 text-2xl font-black border-none outline-none"></div>
                             <div id="split-selectors" class="flex flex-wrap gap-2"></div>
-                            <button onclick="logExpense()" class="w-full btn-premium py-5 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl">Publish Expense</button>
+                            <button onclick="logExpense()" class="w-full btn-premium py-5 rounded-2xl font-black uppercase mt-4 shadow-xl">Publish</button>
                         </div>
                     </div>
                 </div>
@@ -118,49 +137,42 @@
         </div>
 
         <div id="settings-page" class="view-pane max-w-2xl mx-auto">
-            <div class="space-y-6 pb-20">
-                <div id="permission-section" class="hidden silk-card p-8 bg-indigo-50 border-indigo-100">
-                    <h3 class="text-xl font-black text-indigo-900 mb-6">Pending Approvals</h3>
-                    <div id="ticket-list" class="space-y-3"></div>
-                </div>
-
-                <div class="silk-card overflow-hidden">
-                    <button onclick="toggleCollapse('members-collapse')" class="w-full p-8 flex justify-between items-center hover:bg-slate-50">
-                        <h3 class="text-xl font-black">Group Members</h3>
-                        <i class="fa-solid fa-chevron-down"></i>
+            <div class="space-y-6">
+                <div id="admin-tools" class="hidden silk-card overflow-hidden bg-indigo-50/50 border-indigo-100">
+                    <button onclick="toggleCollapse('add-user-collapse')" class="w-full p-8 flex justify-between items-center hover:bg-white transition-all">
+                        <h3 class="text-xl font-black text-indigo-900">Manage Members</h3>
+                        <i class="fa-solid fa-user-plus text-indigo-400"></i>
                     </button>
-                    <div id="members-collapse" class="collapse-content px-8 pb-8"><div id="member-settings-list" class="space-y-3"></div></div>
-                </div>
-
-                <div id="admin-only-tools" class="hidden silk-card p-8 border-red-50 bg-red-50/20">
-                    <h3 class="text-lg font-black text-red-600 mb-4 italic">Circle Root Access</h3>
-                    <button onclick="resetTripHistory()" class="w-full bg-white border-2 border-red-100 text-red-500 font-black py-4 rounded-xl">Reset All Trip Data</button>
-                </div>
-
-                <div class="silk-card overflow-hidden">
-                    <button onclick="toggleCollapse('add-collapse')" class="w-full p-8 flex justify-between items-center hover:bg-slate-50">
-                        <h3 class="text-xl font-black">Add New Member</h3>
-                        <i class="fa-solid fa-plus-circle"></i>
-                    </button>
-                    <div id="add-collapse" class="collapse-content px-8 pb-8">
-                        <div class="p-6 bg-slate-50 rounded-3xl space-y-4">
+                    <div id="add-user-collapse" class="collapse-content px-8 pb-8">
+                        <div class="p-6 bg-white rounded-3xl space-y-4 border shadow-sm">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" id="set-new-name" placeholder="Name" class="bg-white p-4 rounded-xl font-bold outline-none">
-                                <input type="email" id="set-new-email" placeholder="Gmail ID" class="bg-white p-4 rounded-xl font-bold outline-none">
+                                <input type="text" id="new-mem-name" placeholder="Name" class="bg-slate-50 p-4 rounded-xl font-bold border-none outline-none">
+                                <input type="email" id="new-mem-email" placeholder="Gmail ID" class="bg-slate-50 p-4 rounded-xl font-bold border-none outline-none">
                             </div>
-                            <button onclick="saveOrRequestMember()" id="member-action-btn" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest">Action</button>
+                            <button onclick="adminAddMember()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest">Add Member Instantly</button>
                         </div>
                     </div>
                 </div>
+
+                <div class="silk-card overflow-hidden">
+                    <div class="p-8 flex justify-between items-center bg-slate-50/50 border-b">
+                        <h3 class="text-xl font-black">Circle Members</h3>
+                    </div>
+                    <div class="p-8"><div id="member-settings-list" class="space-y-3"></div></div>
+                </div>
+
+                <div id="admin-only-reset" class="hidden silk-card p-8 border-red-50 bg-red-50/20 text-center">
+                    <button onclick="resetTripHistory()" class="w-full bg-white border-2 border-red-100 text-red-500 font-black py-4 rounded-xl shadow-sm">Reset All History</button>
+                </div>
             </div>
         </div>
-
+        
         <div id="profile-page" class="view-pane max-w-md mx-auto text-center p-10 silk-card">
             <img id="profile-img-large" src="" class="w-28 h-28 rounded-3xl mx-auto mb-6 border-4 border-white shadow-2xl">
             <h2 id="profile-name-large" class="text-3xl font-black">...</h2>
             <p id="profile-email-large" class="text-slate-400 font-medium mb-6">...</p>
             <div class="flex justify-center mb-10"><div id="profile-account-type-badge">...</div></div>
-            <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-2xl">Logout Global</button>
+            <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-2xl transition-all shadow-sm">Logout Account</button>
         </div>
     </div>
 
@@ -169,25 +181,16 @@
         import { getDatabase, ref, set, push, onValue, get, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4",
-            authDomain: "trip-ddc48.firebaseapp.com",
-            databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com",
-            projectId: "trip-ddc48",
-            storageBucket: "trip-ddc48.firebasestorage.app"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4", authDomain: "trip-ddc48.firebaseapp.com", databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com", projectId: "trip-ddc48", storageBucket: "trip-ddc48.firebasestorage.app" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         
-        let currentGroupId = null, groupMembers = [], isAdmin = false, adminEmailAddr = "";
-        let tempMembers = [];
+        let currentGroupId = null, groupMembers = [], isAdmin = false, globalExpenses = {}, recycleBin = [];
 
         onAuthStateChanged(auth, async (u) => {
             if (u) {
-                // Fixed Error #5: Bound image on load
                 document.getElementById('user-photo').src = u.photoURL;
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('group-discovery').classList.remove('hidden');
@@ -195,218 +198,181 @@
             } else {
                 document.getElementById('auth-screen').style.display = 'flex';
                 document.getElementById('app-content').classList.add('hidden');
-                document.getElementById('login-container').classList.remove('hidden');
-                document.getElementById('group-discovery').classList.add('hidden');
             }
         });
 
         async function discoverGroups(email) {
-            onValue(ref(db, 'groups'), (snapshot) => {
+            onValue(ref(db, 'groups'), (snap) => {
                 const list = document.getElementById('my-groups-list'); list.innerHTML = '';
-                if (snapshot.exists()) {
-                    const groups = snapshot.val();
+                if (snap.exists()) {
+                    const groups = snap.val();
                     for (let id in groups) {
-                        if (groups[id].members && groups[id].members.some(m => m.email === email)) {
-                            list.innerHTML += `
-                                <div class="silk-card p-6 bg-slate-50 flex justify-between items-center cursor-pointer hover:border-indigo-500 transition-all mb-2" onclick="startApp('${id}', '${groups[id].name}')">
-                                    <div><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p><h4 class="font-bold">${groups[id].name}</h4></div>
-                                    <button onclick="event.stopPropagation(); deleteGroupRequest('${id}')" class="p-3 text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
-                                </div>`;
+                        const members = groups[id].members || [];
+                        if (members.some(m => m.email === email)) {
+                            list.innerHTML += `<div class="silk-card p-6 bg-slate-50 flex justify-between items-center cursor-pointer hover:border-indigo-500 transition-all mb-2" onclick="startApp('${id}', '${groups[id].name}')">
+                                <div><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p><h4 class="font-bold text-slate-800">${groups[id].name}</h4></div>
+                                <button onclick="event.stopPropagation(); moveToRecycleBin('${id}', '${groups[id].name}')" class="p-3 text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>`;
                         }
                     }
+                    renderRecycleBin();
                 }
             });
         }
 
         window.startApp = (id, name) => {
             currentGroupId = id;
-            const u = auth.currentUser;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
-            
-            // Header Sync (Error #1 Fix)
-            document.getElementById('display-group-id').innerText = "ID: " + id;
+            document.getElementById('display-group-id').innerText = id;
             document.getElementById('display-group-name').innerText = name;
-            document.getElementById('user-photo').src = u.photoURL;
+            
+            const u = auth.currentUser;
             document.getElementById('profile-img-large').src = u.photoURL;
             document.getElementById('profile-name-large').innerText = u.displayName;
             document.getElementById('profile-email-large').innerText = u.email;
 
             onValue(ref(db, `groups/${id}`), (snapshot) => {
-                if(!snapshot.exists()) return;
-                const groupData = snapshot.val();
-                adminEmailAddr = groupData.admin;
-                isAdmin = (adminEmailAddr === u.email.toLowerCase());
-                groupMembers = groupData.members || [];
+                const data = snapshot.val();
+                if(!data) { location.reload(); return; }
+                groupMembers = data.members || [];
+                globalExpenses = data.expenses || {};
+                isAdmin = (data.admin === u.email.toLowerCase());
                 
-                // Security Kick
-                if(!groupMembers.some(m => m.email === u.email.toLowerCase())) { location.reload(); return; }
-
-                const actionBtn = document.getElementById('member-action-btn');
                 const badge = document.getElementById('profile-account-type-badge');
-                const adminTools = document.getElementById('admin-only-tools');
-                
                 if(isAdmin) {
-                    document.getElementById('permission-section').classList.remove('hidden');
-                    adminTools.classList.remove('hidden');
-                    actionBtn.innerText = "Save Member Instantly";
-                    badge.className = "badge-profile-admin"; badge.innerHTML = "Admin Root Access";
-                    listenToTickets(id);
+                    document.getElementById('admin-only-reset').classList.remove('hidden');
+                    document.getElementById('admin-tools').classList.remove('hidden');
+                    badge.className = "badge-profile-admin"; badge.innerText = "Admin Root Access";
                 } else {
-                    document.getElementById('permission-section').classList.add('hidden');
-                    adminTools.classList.add('hidden');
-                    actionBtn.innerText = "Raise Add Ticket";
-                    badge.className = "badge-profile-member"; badge.innerHTML = "Verified Member";
+                    document.getElementById('admin-only-reset').classList.add('hidden');
+                    document.getElementById('admin-tools').classList.add('hidden');
+                    badge.className = "badge-profile-member"; badge.innerText = "Verified Member";
                 }
-                
-                renderSettingsMembers();
-                renderUI(groupData.expenses || {});
+                renderUI(globalExpenses);
+                renderSettingsMembers(data.admin);
             });
         };
 
+        // ADMIN FEATURES: ADD/REMOVE MEMBERS
+        window.adminAddMember = async () => {
+            const n = document.getElementById('new-mem-name').value.trim();
+            const e = document.getElementById('new-mem-email').value.trim().toLowerCase();
+            if(!n || !e) return alert("Fill Name and Gmail");
+            if(groupMembers.some(m => m.email === e)) return alert("User already exists");
+
+            groupMembers.push({ name: n, email: e });
+            await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
+            document.getElementById('new-mem-name').value = '';
+            document.getElementById('new-mem-email').value = '';
+            toggleCollapse('add-user-collapse');
+        };
+
+        window.adminRemoveMember = async (index) => {
+            const m = groupMembers[index];
+            if(m.email === auth.currentUser.email.toLowerCase()) return alert("Admins cannot remove themselves.");
+            if(confirm(`Permanently remove ${m.name} from this trip?`)) {
+                groupMembers.splice(index, 1);
+                await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
+            }
+        };
+
+        function renderSettingsMembers(adminEmail) {
+            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `
+                <div class="p-5 silk-card theme-${i < 4 ? i : 'default'} flex justify-between items-center shadow-sm">
+                    <div><p class="font-black text-slate-800">${m.name} ${m.email === adminEmail ? '<span class="badge-admin ml-1">Admin</span>' : ''}</p><p class="text-[10px] font-bold opacity-60 uppercase">${m.email}</p></div>
+                    ${isAdmin && m.email !== adminEmail ? `<button onclick="adminRemoveMember(${i})" class="p-2 text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-user-minus"></i></button>` : ''}
+                </div>`).join('');
+        }
+
+        // Dashboard & UI
         function renderUI(expenses) {
             document.getElementById('split-selectors').innerHTML = groupMembers.map(m => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
             let total = 0, balances = {}; groupMembers.forEach(m => balances[m.name] = 0);
             const feed = document.getElementById('activity-feed'); feed.innerHTML = '';
-            
             const entries = Object.entries(expenses).reverse();
-            // Error #7 Fix
-            if(entries.length === 0) {
-                feed.innerHTML = `<div class="text-center py-20 text-slate-300 italic font-bold">No expenses found.</div>`;
-            }
-
             entries.forEach(([key, exp]) => {
-                total += exp.amount; 
-                // Error #4 Fix (Rounding)
-                const split = Math.round(exp.amount / (exp.involved ? exp.involved.length : 1));
-                if(exp.involved) exp.involved.forEach(n => { if(balances.hasOwnProperty(n)) balances[n] += split; });
-                
-                const adminControls = isAdmin ? `
-                    <div class="flex gap-2 ml-4">
-                        <button onclick="editExpense('${key}', ${exp.amount}, '${exp.title}')" class="text-indigo-400"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteExpense('${key}')" class="text-red-300"><i class="fa-solid fa-trash"></i></button>
-                    </div>` : '';
-
-                feed.innerHTML += `
-                    <div class="p-6 bg-slate-50 rounded-2xl flex justify-between items-center mb-3">
-                        <div class="flex-1">
-                            <h4 class="font-extrabold text-slate-800">${exp.title}</h4>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">By ${exp.by} • ${exp.date || ''}</p>
-                        </div>
-                        <div class="text-right flex items-center">
-                            <div><p class="text-xl font-black text-slate-900">₹${exp.amount}</p><p class="text-[10px] text-indigo-600 font-bold">₹${split} EA</p></div>
-                            ${adminControls}
-                        </div>
-                    </div>`;
+                total += exp.amount; const split = Math.round(exp.amount / (exp.involved?.length || 1));
+                exp.involved?.forEach(n => balances[n] += split);
+                const adminControls = isAdmin ? `<div class="flex gap-2 ml-4"><button onclick="editExpense('${key}', ${exp.amount}, '${exp.title}')" class="text-indigo-400"><i class="fa-solid fa-pen"></i></button><button onclick="deleteExpense('${key}')" class="text-red-300"><i class="fa-solid fa-trash"></i></button></div>` : '';
+                feed.innerHTML += `<div class="p-6 bg-slate-50 rounded-2xl flex justify-between items-center mb-3"><div><h4 class="font-extrabold text-slate-800">${exp.title}</h4><p class="text-[10px] uppercase text-slate-400">By ${exp.by}</p></div><div class="flex items-center"><div class="text-right"><p class="text-xl font-black text-slate-900">₹${exp.amount}</p></div>${adminControls}</div></div>`;
             });
-            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `<div class="silk-card p-6 theme-${i < 4 ? i : 'default'} shadow-sm"><p class="text-[10px] font-black uppercase opacity-70">${m.name}</p><p class="text-2xl font-black">₹${Math.round(balances[m.name])}</p></div>`).join('');
-            document.getElementById('grand-total').innerText = "₹" + total.toFixed(2);
+            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => {
+                const bal = balances[m.name] || 0;
+                return `<div onclick="openMemberModal('${m.name}', ${bal})" class="silk-card p-6 theme-${i < 4 ? i : 'default'} shadow-sm cursor-pointer hover:scale-105 transition-transform"><p class="text-[10px] font-black uppercase opacity-70">${m.name}</p><p class="text-2xl font-black">₹${bal}</p></div>`;
+            }).join('');
+            document.getElementById('grand-total').innerText = "Total ₹" + total;
         }
 
-        window.finalizeCreation = async () => {
-            const gn = document.getElementById('pop-group-name').value.trim(); if(!gn) return;
-            const u = auth.currentUser;
-            const id = "CIRCLE-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-            
-            // Fixed Error #2: Ensure admin is in member list
-            if(!tempMembers.some(m => m.email === u.email.toLowerCase())) {
-                tempMembers.push({ name: u.displayName.split(' ')[0], email: u.email.toLowerCase() });
-            }
-
-            await set(ref(db, `groups/${id}`), { name: gn, members: tempMembers, admin: u.email.toLowerCase() });
-            document.getElementById('creation-popup').classList.add('hidden');
-            startApp(id, gn);
+        // Shared functionality
+        window.copyGroupId = () => { navigator.clipboard.writeText(currentGroupId).then(() => { const b = document.getElementById('display-group-id'); const o = b.innerText; b.innerText = "Copied!"; setTimeout(() => b.innerText = o, 2000); }); };
+        window.openMemberModal = (name, bal) => {
+            document.getElementById('modal-member-name').innerText = name;
+            document.getElementById('modal-member-balance').innerText = `₹${Math.round(bal)}`;
+            document.getElementById('modal-member-img').src = `https://ui-avatars.com/api/?name=${name}&background=4f46e5&color=fff&bold=true&size=128`;
+            const hList = document.getElementById('modal-history-list'); hList.innerHTML = '';
+            const filtered = Object.values(globalExpenses).filter(e => e.involved?.includes(name)).reverse();
+            if(filtered.length === 0) hList.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-xs">No involvement logged.</p>`;
+            else filtered.forEach(e => { hList.innerHTML += `<div class="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center mb-1"><div><h4 class="font-bold text-xs">${e.title}</h4><p class="text-[8px] text-slate-400 uppercase">${e.date}</p></div><p class="text-xs font-black text-indigo-600">₹${Math.round(e.amount/e.involved.length)}</p></div>`; });
+            document.getElementById('modal-history-pane').classList.add('hidden');
+            document.getElementById('history-toggle-btn').innerText = "View contribution Timeline";
+            document.getElementById('member-info-modal').style.display = 'flex';
         };
-
-        window.handleTicket = async (key, approved) => {
-            const snap = await get(ref(db, `groups/${currentGroupId}/tickets/${key}`)); const t = snap.val();
-            if(approved) {
-                if(t.type === 'JOIN_REQUEST' || t.type === 'ADD_MEMBER') {
-                    // Fixed Error #1 & #8: Prevent duplicates
-                    if(!groupMembers.some(m => m.email === t.email)) {
-                        groupMembers.push({ name: t.name, email: t.email });
-                        await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
-                    }
-                } else if(t.type === 'DELETE_MEMBER') {
-                    groupMembers = groupMembers.filter(m => m.email !== t.email);
-                    await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
+        window.moveToRecycleBin = async (id, name) => {
+            if(confirm(`Leave ${name}?`)) {
+                const uEmail = auth.currentUser.email.toLowerCase();
+                const snap = await get(ref(db, `groups/${id}/members`));
+                if(snap.exists()) {
+                    const oldMembers = snap.val();
+                    recycleBin.push({ id, name, userData: oldMembers.find(m => m.email === uEmail) });
+                    await set(ref(db, `groups/${id}/members`), oldMembers.filter(m => m.email !== uEmail));
+                    renderRecycleBin();
                 }
             }
-            await remove(ref(db, `groups/${currentGroupId}/tickets/${key}`));
         };
-
-        window.deleteMember = async (i) => {
-            const m = groupMembers[i];
-            if(!confirm(`Remove ${m.name}?`)) return;
-            if(isAdmin) {
-                groupMembers.splice(i, 1);
-                await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
-            } else {
-                // Fixed Error #3: Include name in ticket
-                push(ref(db, `groups/${currentGroupId}/tickets`), { 
-                    type: 'DELETE_MEMBER', 
-                    name: m.name, 
-                    email: m.email, 
-                    by: auth.currentUser.displayName 
-                });
-                alert("Request sent to Admin.");
-            }
-        };
-
-        // UI HELPERS (Error #6 Fixed: Navigation closes collapses)
-        window.showView = (v) => { 
-            document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); 
-            document.getElementById(v).classList.add('active-view'); 
-            document.querySelectorAll('.collapse-content').forEach(c => c.style.display = 'none');
-        };
-
-        function listenToTickets(id) {
-            onValue(ref(db, `groups/${id}/tickets`), (snap) => {
-                const list = document.getElementById('ticket-list'); list.innerHTML = '';
-                const tickets = snap.val() || {};
-                for(let key in tickets) {
-                    const t = tickets[key];
-                    list.innerHTML += `<div class="p-4 bg-white rounded-2xl border flex justify-between items-center mb-2 shadow-sm">
-                        <div><p class="text-[8px] font-black text-indigo-500 uppercase">${t.type}</p><h4 class="font-bold text-sm">${t.name}</h4></div>
-                        <div class="flex gap-1"><button onclick="handleTicket('${key}', true)" class="w-8 h-8 bg-emerald-500 text-white rounded-lg"><i class="fa-solid fa-check"></i></button><button onclick="handleTicket('${key}', false)" class="w-8 h-8 bg-red-500 text-white rounded-lg"><i class="fa-solid fa-xmark"></i></button></div>
-                    </div>`;
-                }
-            });
+        function renderRecycleBin() {
+            const section = document.getElementById('recycle-bin-section');
+            const list = document.getElementById('recycle-list');
+            if(recycleBin.length === 0) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+            list.innerHTML = recycleBin.map((item, index) => `<div class="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200"><span class="text-xs font-bold text-slate-500">${item.name}</span><button onclick="restoreFromBin(${index})" class="text-[10px] font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border">Undo</button></div>`).join('');
         }
-
+        window.restoreFromBin = async (index) => {
+            const item = recycleBin[index];
+            const snap = await get(ref(db, `groups/${item.id}/members`));
+            if(snap.exists()) {
+                const m = snap.val(); m.push(item.userData);
+                await set(ref(db, `groups/${item.id}/members`), m);
+                recycleBin.splice(index, 1); renderRecycleBin();
+            }
+        };
         window.editExpense = async (key, oldAmt, oldTitle) => {
-            const nt = prompt("New Title:", oldTitle);
-            const na = prompt("New Amount:", oldAmt);
+            const nt = prompt("New Description:", oldTitle); const na = prompt("New Amount:", oldAmt);
             if(nt && na) await update(ref(db, `groups/${currentGroupId}/expenses/${key}`), { title: nt, amount: parseFloat(na) });
         };
-        window.deleteExpense = async (key) => { if(confirm("Delete?")) await remove(ref(db, `groups/${currentGroupId}/expenses/${key}`)); };
-        window.resetTripHistory = async () => { if(confirm("DANGER: Reset history?")) await remove(ref(db, `groups/${currentGroupId}/expenses`)); };
-        window.saveOrRequestMember = async () => { 
-            const n = document.getElementById('set-new-name').value, e = document.getElementById('set-new-email').value.toLowerCase(); 
-            if(!n || !e) return; 
-            if(isAdmin) { if(!groupMembers.some(m => m.email === e)) { groupMembers.push({ name: n, email: e }); await set(ref(db, `groups/${currentGroupId}/members`), groupMembers); }}
-            else { push(ref(db, `groups/${currentGroupId}/tickets`), { type: 'ADD_MEMBER', name: n, email: e, by: auth.currentUser.displayName }); alert("Ticket sent."); }
-            toggleCollapse('add-collapse');
-        };
-        window.toggleCollapse = (id) => { const el = document.getElementById(id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; };
-        window.signOutNow = () => signOut(auth).then(() => location.reload());
-        document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
-        window.addMemberToPop = () => { const n = document.getElementById('pop-name').value, e = document.getElementById('pop-email').value; if(n && e) { tempMembers.push({ name: n, email: e.toLowerCase() }); renderPopList(); document.getElementById('pop-name').value = ''; document.getElementById('pop-email').value = ''; } };
-        function renderPopList() { document.getElementById('pop-member-list').innerHTML = tempMembers.map(m => `<div class="p-3 bg-slate-50 rounded-xl text-xs font-bold border">${m.name}</div>`).join(''); }
-        window.showJoinManual = () => document.getElementById('join-modal').classList.remove('hidden');
-        window.showCreationPopup = () => { document.getElementById('creation-popup').classList.remove('hidden'); tempMembers = [{ name: auth.currentUser.displayName.split(' ')[0], email: auth.currentUser.email.toLowerCase() }]; renderPopList(); };
-        window.deleteGroupRequest = async (id) => { if(confirm("Leave circle?")) { const f = groupMembers.filter(m => m.email !== auth.currentUser.email.toLowerCase()); await set(ref(db, `groups/${id}/members`), f); } };
+        window.deleteExpense = async (key) => { if(confirm("Delete expense?")) await remove(ref(db, `groups/${currentGroupId}/expenses/${key}`)); };
+        window.resetTripHistory = async () => { if(confirm("DANGER: Clear data?")) await remove(ref(db, `groups/${currentGroupId}/expenses`)); };
+        window.toggleMemberHistory = () => { const p = document.getElementById('modal-history-pane'); p.classList.toggle('hidden'); document.getElementById('history-toggle-btn').innerText = p.classList.contains('hidden') ? "View contribution Timeline" : "Hide Timeline"; };
+        window.closeMemberModal = () => document.getElementById('member-info-modal').style.display = 'none';
         window.logExpense = () => {
             const t = document.getElementById('bill-title').value, a = parseFloat(document.getElementById('bill-amount').value);
             const sel = Array.from(document.querySelectorAll('#split-selectors .active-chip')).map(b => b.dataset.name);
-            if(t && a && sel.length) { push(ref(db, `groups/${currentGroupId}/expenses`), { title: t, amount: a, involved: sel, by: auth.currentUser.displayName.split(' ')[0], date: new Date().toLocaleDateString(), time: Date.now() }); document.getElementById('bill-title').value = ''; document.getElementById('bill-amount').value = ''; }
+            if(t && a && sel.length) { push(ref(db, `groups/${currentGroupId}/expenses`), { title: t, amount: a, involved: sel, by: auth.currentUser.displayName.split(' ')[0], date: new Date().toLocaleDateString() }); document.getElementById('bill-title').value = ''; document.getElementById('bill-amount').value = ''; }
         };
-        function renderSettingsMembers() {
-            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `<div class="p-5 silk-card theme-${i < 4 ? i : 'default'} flex justify-between items-center mb-2 shadow-sm"><div><p class="font-black">${m.name} ${m.email === adminEmailAddr ? '<span class="badge-admin ml-1">Admin</span>' : ''}</p><p class="text-[10px] font-bold uppercase opacity-60">${m.email}</p></div>${m.email !== auth.currentUser.email.toLowerCase() ? `<button onclick="deleteMember(${i})" class="p-2 opacity-60 hover:opacity-100"><i class="fa-solid fa-user-minus"></i></button>` : ''}</div>`).join('');
-        }
+        window.toggleCollapse = (id) => { const el = document.getElementById(id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; };
+        window.showView = (v) => { document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); document.getElementById(v).classList.add('active-view'); };
+        window.signOutNow = () => signOut(auth).then(() => location.reload());
+        document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
+        window.showCreationPopup = () => document.getElementById('creation-popup').classList.remove('hidden');
+        window.finalizeCreation = async () => { const gn = document.getElementById('pop-group-name').value.trim(); if(!gn) return; const id = "CIRCLE-" + Math.random().toString(36).substr(2, 4).toUpperCase(); const admin = {name: auth.currentUser.displayName.split(' ')[0], email: auth.currentUser.email.toLowerCase()}; await set(ref(db, `groups/${id}`), { name: gn, members: [admin], admin: admin.email }); location.reload(); };
+        window.showJoinManual = () => document.getElementById('join-modal').classList.remove('hidden');
         window.joinGroupManual = async () => {
             const id = document.getElementById('manual-id').value.trim().toUpperCase(); const snap = await get(ref(db, `groups/${id}`));
-            if(snap.exists()) { push(ref(db, `groups/${id}/tickets`), { type: 'JOIN_REQUEST', name: auth.currentUser.displayName.split(' ')[0], email: auth.currentUser.email.toLowerCase() }); alert("Sent!"); document.getElementById('join-modal').classList.add('hidden'); }
+            if(snap.exists()) {
+                const members = snap.val().members || []; const u = auth.currentUser;
+                if(!members.some(m => m.email === u.email.toLowerCase())) { members.push({ name: u.displayName.split(' ')[0], email: u.email.toLowerCase() }); await set(ref(db, `groups/${id}/members`), members); }
+                startApp(id, snap.val().name); document.getElementById('join-modal').classList.add('hidden');
+            } else alert("Invalid ID");
         };
     </script>
 </body>
