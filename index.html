@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TripSplit | Premium Cloud Sharing</title>
+    <title>TripSplit | Cloud Sharing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -18,14 +18,14 @@
         .member-chip { background: #ffffff; border: 2px solid #f1f5f9; padding: 10px 18px; border-radius: 1rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .active-chip { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
         
-        /* Unified Color Themes */
         .theme-0 { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
         .theme-1 { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
         .theme-2 { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
         .theme-3 { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
         .theme-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-        #add-member-form { display: none; transition: all 0.3s ease; }
+        #add-member-form { display: none; }
+        #discovery-loader { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -43,7 +43,10 @@
                 <h2 class="text-3xl font-black">My Circles</h2>
                 <button onclick="signOutNow()" class="text-red-500 font-black text-[10px] uppercase tracking-widest bg-red-50 px-4 py-2 rounded-lg">Logout</button>
             </div>
+            
+            <div id="discovery-status" class="text-center py-4 text-xs font-bold text-slate-400">Scanning Cloud...</div>
             <div id="my-groups-list" class="space-y-4 mb-10"></div>
+            
             <div class="silk-card p-6 bg-indigo-600 text-white flex gap-2">
                 <button onclick="showJoinManual()" class="flex-1 bg-white/10 py-3 rounded-xl font-bold text-xs uppercase">Join ID</button>
                 <button onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-3 rounded-xl font-bold text-xs shadow-lg uppercase">Create New</button>
@@ -54,10 +57,12 @@
     <div id="join-modal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6">
         <div class="silk-card p-8 max-w-sm w-full">
             <h3 class="text-xl font-black mb-4">Join Circle</h3>
-            <input type="text" id="manual-id" placeholder="CIRCLE-ID" class="w-full p-4 bg-slate-50 rounded-xl font-black text-center mb-4 uppercase outline-none">
+            <input type="text" id="manual-id" placeholder="CIRCLE-ID" class="w-full p-4 bg-slate-50 rounded-xl font-black text-center mb-4 uppercase outline-none focus:ring-2 ring-indigo-500/20">
             <div class="flex gap-2">
                 <button onclick="document.getElementById('join-modal').classList.add('hidden')" class="flex-1 font-bold text-slate-400">Cancel</button>
-                <button onclick="joinGroupManual()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black">Enter</button>
+                <button id="join-btn-final" onclick="joinGroupManual()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black flex items-center justify-center gap-2">
+                    <span id="btn-text">Enter</span>
+                </button>
             </div>
         </div>
     </div>
@@ -65,10 +70,10 @@
     <div id="creation-popup" class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6 overflow-y-auto">
         <div class="silk-card p-8 max-w-lg w-full my-auto">
             <h2 class="text-2xl font-black mb-6">New Circle</h2>
-            <input type="text" id="pop-group-name" placeholder="Name" class="w-full bg-slate-50 p-4 rounded-xl font-bold border-none mb-6">
+            <input type="text" id="pop-group-name" placeholder="Circle Name" class="w-full bg-slate-50 p-4 rounded-xl font-bold border-none mb-6">
             <div id="pop-member-list" class="space-y-2 mb-4"></div>
             <div class="grid grid-cols-2 gap-2 mb-4">
-                <input type="text" id="pop-name" placeholder="Friend Name" class="bg-slate-50 p-4 rounded-xl font-bold border-none">
+                <input type="text" id="pop-name" placeholder="Name" class="bg-slate-50 p-4 rounded-xl font-bold border-none">
                 <input type="email" id="pop-email" placeholder="Gmail" class="bg-slate-50 p-4 rounded-xl font-bold border-none">
             </div>
             <button onclick="addMemberToPop()" class="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl font-bold text-slate-400 mb-6">+ Add Friend</button>
@@ -86,7 +91,7 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-slate-100">Home</button>
+                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-slate-100 hover:bg-slate-50">Home</button>
                 <button onclick="location.reload()" class="bg-slate-100 px-6 py-3 rounded-2xl text-sm font-bold text-slate-600">Switch</button>
                 <button onclick="showView('settings-page')" class="bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg"><i class="fa-solid fa-sliders"></i></button>
             </div>
@@ -97,7 +102,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div class="lg:col-span-5">
                     <div class="silk-card p-8 sticky top-10 border-slate-100">
-                        <h3 class="text-lg font-black mb-8 text-slate-800">New Expense</h3>
+                        <h3 class="text-lg font-black mb-8 text-slate-800 italic">Log Expense</h3>
                         <div class="space-y-6">
                             <input type="text" id="bill-title" placeholder="Description" class="w-full bg-slate-50 rounded-2xl p-4 font-bold outline-none">
                             <div class="relative"><span class="absolute left-4 top-4 text-slate-400 font-black">₹</span><input type="number" id="bill-amount" placeholder="0.00" class="w-full bg-slate-50 rounded-2xl p-4 pl-10 text-2xl font-black border-none"></div>
@@ -108,7 +113,7 @@
                 </div>
                 <div class="lg:col-span-7">
                     <div class="silk-card p-8 min-h-[500px]">
-                        <h3 class="text-xl font-black text-slate-800 mb-6 border-b pb-4">History <span id="grand-total" class="float-right text-indigo-600 text-sm font-black"></span></h3>
+                        <h3 class="text-xl font-black text-slate-800 mb-6 border-b pb-4">Timeline <span id="grand-total" class="float-right text-indigo-600 text-sm font-black"></span></h3>
                         <div id="activity-feed" class="space-y-5"></div>
                     </div>
                 </div>
@@ -118,28 +123,19 @@
         <div id="settings-page" class="view-pane max-w-2xl mx-auto">
             <div class="silk-card p-8">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-black text-slate-900">Manage Circle</h3>
-                    <button onclick="toggleAddMemberForm()" id="plus-btn" class="bg-indigo-600 text-white w-10 h-10 rounded-xl font-bold transition-all hover:rotate-90">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
+                    <h3 class="text-2xl font-black text-slate-900">Circle Members</h3>
+                    <button onclick="toggleAddMemberForm()" class="bg-indigo-600 text-white w-10 h-10 rounded-xl font-bold"><i class="fa-solid fa-plus"></i></button>
                 </div>
-
                 <div id="add-member-form" class="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Add Friend to Cloud</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                        <input type="text" id="set-new-name" placeholder="Name" class="bg-white p-4 rounded-xl font-bold border-none outline-none shadow-sm">
-                        <input type="email" id="set-new-email" placeholder="Gmail ID" class="bg-white p-4 rounded-xl font-bold border-none outline-none shadow-sm">
+                        <input type="text" id="set-new-name" placeholder="Name" class="bg-white p-4 rounded-xl font-bold border-none outline-none">
+                        <input type="email" id="set-new-email" placeholder="Gmail ID" class="bg-white p-4 rounded-xl font-bold border-none outline-none">
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="saveNewMemberInSettings()" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest">Save Member</button>
-                        <button onclick="toggleAddMemberForm()" class="px-6 bg-slate-200 text-slate-600 py-4 rounded-xl font-black text-xs uppercase">Cancel</button>
-                    </div>
+                    <button onclick="saveNewMemberInSettings()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase">Save Member</button>
                 </div>
-
                 <div id="member-settings-list" class="space-y-3 mb-8"></div>
-                
                 <div class="pt-8 border-t">
-                    <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 py-4 rounded-xl font-bold">Sign Out Account</button>
+                    <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 py-4 rounded-xl font-bold">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -180,18 +176,48 @@
             const snap = await get(ref(db, 'groups'));
             const list = document.getElementById('my-groups-list');
             list.innerHTML = '';
+            let count = 0;
             if (snap.exists()) {
                 const groups = snap.val();
                 for (let id in groups) {
                     if (groups[id].members && groups[id].members.some(m => m.email === email)) {
-                        list.innerHTML += `<div class="silk-card p-6 bg-slate-50 flex justify-between items-center cursor-pointer hover:border-indigo-500" onclick="startApp('${id}', '${groups[id].name}')">
+                        count++;
+                        list.innerHTML += `<div class="silk-card p-6 bg-slate-50 flex justify-between items-center cursor-pointer border-2 border-transparent hover:border-indigo-500" onclick="startApp('${id}', '${groups[id].name}')">
                             <div><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p><h4 class="font-bold text-slate-800">${groups[id].name}</h4></div>
                             <i class="fa-solid fa-arrow-right text-slate-300"></i>
                         </div>`;
                     }
                 }
             }
+            document.getElementById('discovery-status').innerText = count > 0 ? "Groups Found" : "No groups found yet.";
         }
+
+        window.joinGroupManual = async () => {
+            const id = document.getElementById('manual-id').value.trim().toUpperCase();
+            if(!id) return alert("Enter an ID");
+            
+            const btn = document.getElementById('join-btn-final');
+            btn.disabled = true;
+            document.getElementById('btn-text').innerText = "Joining...";
+
+            const snap = await get(ref(db, `groups/${id}`));
+            if(snap.exists()) {
+                const groupData = snap.val();
+                // Add current user to group members automatically if they are joining via ID
+                const user = auth.currentUser;
+                let members = groupData.members || [];
+                if(!members.some(m => m.email === user.email.toLowerCase())) {
+                    members.push({ name: user.displayName.split(' ')[0], email: user.email.toLowerCase() });
+                    await set(ref(db, `groups/${id}/members`), members);
+                }
+                document.getElementById('join-modal').classList.add('hidden');
+                startApp(id, groupData.name);
+            } else {
+                alert("Circle ID not found. Check the code and try again.");
+            }
+            btn.disabled = false;
+            document.getElementById('btn-text').innerText = "Enter";
+        };
 
         window.showJoinManual = () => document.getElementById('join-modal').classList.remove('hidden');
         window.showCreationPopup = () => {
@@ -234,7 +260,7 @@
         };
 
         function renderUI(expenses) {
-            document.getElementById('split-selectors').innerHTML = groupMembers.map(m => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
+            document.getElementById('split-selectors').innerHTML = groupMembers.map((m, i) => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
             let total = 0, balances = {};
             groupMembers.forEach(m => balances[m.name] = 0);
             const feed = document.getElementById('activity-feed'); feed.innerHTML = '';
@@ -243,56 +269,34 @@
                 exp.involved.forEach(n => { if(balances.hasOwnProperty(n)) balances[n] += split; });
                 feed.innerHTML += `<div class="p-6 bg-slate-50 rounded-2xl flex justify-between items-center mb-3"><div><h4 class="font-extrabold">${exp.title}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">By ${exp.by}</p></div><div class="text-right"><p class="text-xl font-black">₹${exp.amount}</p><p class="text-[10px] text-indigo-600 font-bold">₹${split.toFixed(0)} EA</p></div></div>`;
             });
-            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `
-                <div class="silk-card p-6 theme-${i < 4 ? i : 'default'} shadow-md">
-                    <p class="text-[10px] font-black uppercase opacity-70 tracking-widest">${m.name}</p>
-                    <p class="text-2xl font-black">₹${balances[m.name].toFixed(0)}</p>
-                </div>
-            `).join('');
-            document.getElementById('grand-total').innerText = "Total ₹" + total.toLocaleString();
+            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `<div class="silk-card p-6 theme-${i < 4 ? i : 'default'} shadow-md"><p class="text-[10px] font-black uppercase opacity-70 tracking-widest">${m.name}</p><p class="text-2xl font-black">₹${balances[m.name].toFixed(0)}</p></div>`).join('');
+            document.getElementById('grand-total').innerText = "₹" + total.toLocaleString();
         }
 
-        // SETTINGS UPDATES
         window.toggleAddMemberForm = () => {
             const form = document.getElementById('add-member-form');
             form.style.display = (form.style.display === 'block') ? 'none' : 'block';
         };
 
         window.saveNewMemberInSettings = async () => {
-            const n = document.getElementById('set-new-name').value;
-            const e = document.getElementById('set-new-email').value.toLowerCase();
+            const n = document.getElementById('set-new-name').value, e = document.getElementById('set-new-email').value.toLowerCase();
             if(n && e) {
                 groupMembers.push({ name: n, email: e });
                 await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
-                document.getElementById('set-new-name').value = '';
-                document.getElementById('set-new-email').value = '';
+                document.getElementById('set-new-name').value = ''; document.getElementById('set-new-email').value = '';
                 toggleAddMemberForm();
-            } else alert("Fill Name and Gmail");
+            }
         };
 
         function renderSettingsMembers() {
-            const list = document.getElementById('member-settings-list');
-            list.innerHTML = groupMembers.map((m, i) => `
+            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `
                 <div class="p-5 silk-card theme-${i < 4 ? i : 'default'} flex justify-between items-center shadow-sm">
-                    <div>
-                        <p class="font-black">${m.name}</p>
-                        <p class="text-[10px] font-bold opacity-60 uppercase">${m.email}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editMember(${i})" class="p-2 opacity-60 hover:opacity-100"><i class="fa-solid fa-pen-to-square"></i></button>
-                        ${m.email !== auth.currentUser.email ? `<button onclick="deleteMember(${i})" class="p-2 opacity-60 hover:opacity-100"><i class="fa-solid fa-user-minus"></i></button>` : ''}
-                    </div>
+                    <div><p class="font-black">${m.name}</p><p class="text-[10px] font-bold opacity-60">${m.email}</p></div>
+                    ${m.email !== auth.currentUser.email ? `<button onclick="deleteMember(${i})" class="p-2 opacity-60"><i class="fa-solid fa-user-minus"></i></button>` : ''}
                 </div>`).join('');
         }
 
-        window.deleteMember = async (i) => {
-            if(confirm("Delete this member?")) { groupMembers.splice(i, 1); await set(ref(db, `groups/${currentGroupId}/members`), groupMembers); }
-        };
-
-        window.editMember = async (i) => {
-            const newName = prompt("Edit Name:", groupMembers[i].name);
-            if(newName) { groupMembers[i].name = newName; await set(ref(db, `groups/${currentGroupId}/members`), groupMembers); }
-        };
+        window.deleteMember = async (i) => { if(confirm("Delete?")) { groupMembers.splice(i, 1); await set(ref(db, `groups/${currentGroupId}/members`), groupMembers); } };
 
         window.logExpense = () => {
             const t = document.getElementById('bill-title').value, a = parseFloat(document.getElementById('bill-amount').value);
@@ -306,12 +310,6 @@
         window.signOutNow = () => signOut(auth).then(() => location.reload());
         window.showView = (v) => { document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); document.getElementById(v).classList.add('active-view'); };
         document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
-        window.joinGroupManual = async () => {
-            const id = document.getElementById('manual-id').value.trim().toUpperCase();
-            const snap = await get(ref(db, `groups/${id}`));
-            if(snap.exists()) startApp(id, snap.val().name);
-            else alert("ID not found");
-        };
     </script>
 </body>
 </html>
