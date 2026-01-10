@@ -28,13 +28,11 @@
         .member-chip { border: 2px solid #f1f5f9; padding: 10px 18px; border-radius: 1.2rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; filter: grayscale(1); opacity: 0.6; }
         .member-chip.active-chip { filter: grayscale(0); opacity: 1; border-color: currentColor; }
 
-        /* Theme colors for sync */
         .theme-0 { background-color: #e0e7ff !important; color: #4338ca !important; }
         .theme-1 { background-color: #fce7f3 !important; color: #be185d !important; }
         .theme-2 { background-color: #fef3c7 !important; color: #b45309 !important; }
         .theme-3 { background-color: #d1fae5 !important; color: #047857 !important; }
         
-        /* Inline mini badges for timeline */
         .mini-badge { padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; display: inline-block; margin-right: 4px; margin-top: 4px; }
 
         .collapse-btn { width: 100%; text-align: left; padding: 1.5rem 2rem; background: #ffffff; border-radius: 2rem; border: 1px solid rgba(0,0,0,0.05); font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
@@ -44,6 +42,8 @@
         .notif-dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background: #ef4444; border: 2px solid white; border-radius: 50%; display: none; }
         .pulse { animation: pulse-red 2s infinite; }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -132,7 +132,22 @@
     </div>
 
     <div id="creation-modal-overlay" class="modal-overlay"><div class="modal-content-silk"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h2 class="text-2xl font-black mb-6 text-gray-900 text-center">New Group</h2><input type="text" id="pop-group-name" placeholder="Group Name" class="w-full bg-gray-50 p-4 rounded-silk font-bold mb-6 border-none outline-none"><button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase tracking-widest shadow-xl">Launch</button></div></div>
+    
     <div id="join-modal-overlay" class="modal-overlay"><div class="modal-content-silk text-center"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h3 class="text-xl font-black mb-6 tracking-tight">Join Circle ID</h3><input type="text" id="manual-id" placeholder="ENTER ID" class="w-full p-4 bg-gray-50 rounded-silk font-black text-center mb-6 uppercase border-none outline-none"><button onclick="requestJoinGroup()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase">Send Request</button></div></div>
+
+    <div id="delete-modal-overlay" class="modal-overlay">
+        <div class="modal-content-silk text-center">
+            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="delete-modal-title" class="text-2xl font-black mb-2 tracking-tight text-gray-900">Confirm Action</h3>
+            <p id="delete-modal-desc" class="text-gray-500 font-bold mb-8 px-4 leading-relaxed">Are you sure you want to proceed?</p>
+            <div class="flex gap-3">
+                <button onclick="hideModals()" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-button font-black uppercase tracking-widest">Cancel</button>
+                <button id="confirm-delete-btn" class="flex-1 bg-red-500 text-white py-4 rounded-button font-black uppercase tracking-widest shadow-lg">Proceed</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -169,12 +184,52 @@
                     for (let id in groups) {
                         const members = groups[id].members || [];
                         if (members.some(m => m.email === email)) {
-                            list.innerHTML += `<div class="silk-card p-6 bg-gray-50 flex justify-between items-center cursor-pointer mb-2" onclick="startApp('${id}', '${groups[id].name}')"><div><h4 class="font-bold text-gray-800">${groups[id].name}</h4><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p></div><i class="fa-solid fa-chevron-right text-gray-300"></i></div>`;
+                            const isOwner = groups[id].admin === email;
+                            list.innerHTML += `
+                                <div class="silk-card p-6 bg-gray-50 flex justify-between items-center mb-2 transition-all hover:shadow-md">
+                                    <div class="cursor-pointer flex-1" onclick="startApp('${id}', '${groups[id].name}')">
+                                        <h4 class="font-bold text-gray-800">${groups[id].name}</h4>
+                                        <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id} ${isOwner ? '• OWNER' : ''}</p>
+                                    </div>
+                                    <button onclick="openDeleteWarning('${id}', '${groups[id].name}', ${isOwner})" class="p-3 text-red-400 hover:bg-red-50 rounded-xl transition-colors">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>`;
                         }
                     }
                 }
             });
         }
+
+        window.openDeleteWarning = (id, name, isOwner) => {
+            const overlay = document.getElementById('delete-modal-overlay');
+            const title = document.getElementById('delete-modal-title');
+            const desc = document.getElementById('delete-modal-desc');
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+
+            title.innerText = isOwner ? "Delete Circle?" : "Leave Circle?";
+            desc.innerText = isOwner 
+                ? `WARNING: You are the Owner of "${name}". Deleting this will permanently remove all expenses for EVERYONE.` 
+                : `Are you sure you want to leave "${name}"? You will lose access to all shared expenses.`;
+            
+            overlay.style.display = 'flex';
+
+            confirmBtn.onclick = async () => {
+                try {
+                    if (isOwner) {
+                        await db.ref(`groups/${id}`).remove();
+                    } else {
+                        const userEmail = auth.currentUser.email.toLowerCase();
+                        const snap = await db.ref(`groups/${id}/members`).get();
+                        if (snap.exists()) {
+                            const updatedMembers = snap.val().filter(m => m.email !== userEmail);
+                            await db.ref(`groups/${id}/members`).set(updatedMembers);
+                        }
+                    }
+                    hideModals();
+                } catch (e) { alert("Error updating group data."); }
+            };
+        };
 
         window.startApp = (id, name) => {
             currentGroupId = id;
@@ -212,11 +267,9 @@
                 total += exp.amount; 
                 const split = Math.round(exp.amount / (exp.involved?.length || 1));
                 
-                // GENERATE TIMELINE BREAKDOWN
                 let breakdownHTML = '';
                 exp.involved?.forEach(name => {
                     if (balances.hasOwnProperty(name)) balances[name] += split;
-                    // Find member index for color sync
                     const mIdx = groupMembers.findIndex(gm => gm.name === name);
                     breakdownHTML += `<span class="mini-badge theme-${mIdx % 4}">${name}: ₹${split}</span>`;
                 });
@@ -237,7 +290,6 @@
             document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `<div class="silk-card p-6 theme-${i % 4} transition-transform hover:scale-105 shadow-sm"><p class="text-[10px] font-black uppercase opacity-70 tracking-widest">${m.name}</p><p class="text-2xl font-black">₹${balances[m.name] || 0}</p></div>`).join('');
         }
 
-        // ... Other existing helper functions (Tickets, Auth, Modals, Log Expense etc)
         function listenForTickets(groupId) {
             db.ref(`groups/${groupId}/tickets`).on('value', snap => {
                 const list = document.getElementById('ticket-list');
@@ -277,7 +329,11 @@
         window.showView = (v) => { document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); document.getElementById(v).classList.add('active-view'); };
         window.showCreationPopup = () => document.getElementById('creation-modal-overlay').style.display = 'flex';
         window.showJoinManual = () => document.getElementById('join-modal-overlay').style.display = 'flex';
-        window.hideModals = () => { document.getElementById('creation-modal-overlay').style.display = 'none'; document.getElementById('join-modal-overlay').style.display = 'none'; };
+        window.hideModals = () => { 
+            document.getElementById('creation-modal-overlay').style.display = 'none'; 
+            document.getElementById('join-modal-overlay').style.display = 'none'; 
+            document.getElementById('delete-modal-overlay').style.display = 'none';
+        };
         
         window.finalizeCreation = async () => {
             const gn = document.getElementById('pop-group-name').value.trim();
