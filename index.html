@@ -25,6 +25,18 @@
         .timeline-scroll-area::-webkit-scrollbar { width: 5px; }
         .timeline-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
+        /* MY CIRCLES SCROLL FEATURE */
+        #my-groups-list { 
+            max-height: 320px; 
+            overflow-y: auto; 
+            padding-right: 8px;
+            scroll-behavior: smooth;
+        }
+        #my-groups-list::-webkit-scrollbar { width: 4px; }
+        #my-groups-list::-webkit-scrollbar-track { background: transparent; }
+        #my-groups-list::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
+        #my-groups-list::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.3); }
+
         .member-chip { border: 2px solid #f1f5f9; padding: 10px 18px; border-radius: 1.2rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; filter: grayscale(1); opacity: 0.6; }
         .member-chip.active-chip { filter: grayscale(0); opacity: 1; border-color: currentColor; }
 
@@ -44,6 +56,22 @@
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         
         @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .branding-container { position: relative; overflow: hidden; padding: 3rem 0; border-radius: 3rem; background: rgba(255,255,255,0.4); margin-bottom: 2rem; }
+        .tape { position: absolute; width: 200%; height: 60px; display: flex; align-items: center; white-space: nowrap; font-weight: 900; font-size: 1.4rem; color: white; z-index: 0; pointer-events: none; text-transform: uppercase; letter-spacing: 0.3rem; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .tape-1 { background: linear-gradient(90deg, #4f46e5, #6366f1); transform: rotate(-12deg) translateY(20px); top: 15%; left: -50%; }
+        .tape-2 { background: linear-gradient(90deg, #1e293b, #334155); transform: rotate(12deg) translateY(-20px); bottom: 15%; left: -50%; }
+        .marquee { animation: marquee 25s linear infinite; display: flex; gap: 3rem; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        .logo-box { position: relative; display: inline-block; margin-bottom: 2.5rem; }
+        .logo-main { font-size: 4.5rem; font-weight: 900; letter-spacing: -0.3rem; display: flex; gap: 5px; }
+        .trip-text { color: #1e293b; animation: splitLeft 3s infinite ease-in-out; }
+        .split-text { color: #4f46e5; animation: splitRight 3s infinite ease-in-out; }
+        @keyframes splitLeft { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-15px); opacity: 0.8; } }
+        @keyframes splitRight { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(15px); opacity: 0.8; } }
+        .logo-underline { height: 6px; width: 100%; background: #4f46e5; border-radius: 10px; margin-top: -10px; transform: scaleX(0.4); animation: lineGrow 3s infinite ease-in-out; }
+        @keyframes lineGrow { 0%, 100% { transform: scaleX(0.4); } 50% { transform: scaleX(1); } }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -52,21 +80,45 @@
 
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6">
         <div id="login-container" class="text-center max-w-sm w-full">
-            <h1 class="text-5xl font-black text-gray-900 mb-2 tracking-tighter">TRIP<span class="text-indigo-600">SPLIT</span></h1>
-            <button id="google-login-btn" class="bg-white border border-gray-200 flex items-center justify-center gap-3 w-full py-4 rounded-button font-bold text-lg shadow-sm hover:bg-gray-50 transition-all">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Continue with Google
+            <div class="logo-box">
+                <div class="logo-main">
+                    <span class="trip-text">TRIP</span>
+                    <span class="split-text">SPLIT</span>
+                </div>
+                <div class="logo-underline"></div>
+            </div>
+            <p class="text-gray-400 font-bold mb-8 text-sm uppercase tracking-widest">Premium Expense Cloud</p>
+            <button id="google-login-btn" class="bg-white border-2 border-gray-100 flex items-center justify-center gap-3 w-full py-5 rounded-button font-black text-lg shadow-xl hover:bg-gray-50 transition-all hover:scale-[1.02] active:scale-95">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22"> Continue with Google
             </button>
         </div>
+        
         <div id="group-discovery" class="hidden w-full max-w-md">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-black">My Circles</h2>
-                <button onclick="signOutNow()" class="text-red-500 font-black text-xs bg-red-50 px-4 py-2 rounded-xl">Logout</button>
+                <h2 class="text-3xl font-black tracking-tighter">My Circles</h2>
+                <button onclick="signOutNow()" class="text-red-500 font-black text-[10px] bg-red-50 px-5 py-2.5 rounded-2xl uppercase tracking-tighter">Exit Account</button>
             </div>
-            <div id="my-groups-list" class="space-y-4 mb-8"></div>
-            <div class="silk-card p-6 bg-indigo-600 shadow-xl">
+            
+            <div class="branding-container shadow-inner">
+                <div class="tape tape-1">
+                    <div class="marquee">
+                        <span>TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; </span>
+                        <span>TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; </span>
+                    </div>
+                </div>
+                <div class="tape tape-2">
+                    <div class="marquee" style="animation-direction: reverse;">
+                        <span>TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; </span>
+                        <span>TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; TRIPSPLIT &bull; </span>
+                    </div>
+                </div>
+                <div id="my-groups-list" class="space-y-4 px-6 relative z-10"></div>
+            </div>
+
+            <div class="silk-card p-6 bg-indigo-600 shadow-2xl relative z-10 -mt-6">
                 <div class="flex gap-3">
-                    <button onclick="showJoinManual()" class="flex-1 bg-indigo-700 text-white py-4 rounded-button font-black text-[11px] uppercase tracking-widest border border-white/20">Join ID</button>
-                    <button onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-4 rounded-button font-black text-[11px] uppercase tracking-widest shadow-lg">Create New Group</button>
+                    <button id="join-manual-btn" onclick="showJoinManual()" class="flex-1 bg-indigo-700 text-white py-4 rounded-button font-black text-[11px] uppercase tracking-widest border border-white/20">Join ID</button>
+                    <button id="create-new-btn" onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-4 rounded-button font-black text-[11px] uppercase tracking-widest shadow-lg">Create New</button>
                 </div>
             </div>
         </div>
@@ -132,7 +184,6 @@
     </div>
 
     <div id="creation-modal-overlay" class="modal-overlay"><div class="modal-content-silk"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h2 class="text-2xl font-black mb-6 text-gray-900 text-center">New Group</h2><input type="text" id="pop-group-name" placeholder="Group Name" class="w-full bg-gray-50 p-4 rounded-silk font-bold mb-6 border-none outline-none"><button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase tracking-widest shadow-xl">Launch</button></div></div>
-    
     <div id="join-modal-overlay" class="modal-overlay"><div class="modal-content-silk text-center"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h3 class="text-xl font-black mb-6 tracking-tight">Join Circle ID</h3><input type="text" id="manual-id" placeholder="ENTER ID" class="w-full p-4 bg-gray-50 rounded-silk font-black text-center mb-6 uppercase border-none outline-none"><button onclick="requestJoinGroup()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase">Send Request</button></div></div>
 
     <div id="delete-modal-overlay" class="modal-overlay">
@@ -173,6 +224,8 @@
             } else {
                 document.getElementById('auth-screen').style.display = 'flex';
                 document.getElementById('app-content').classList.add('hidden');
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('group-discovery').classList.add('hidden');
             }
         });
 
@@ -186,10 +239,13 @@
                         if (members.some(m => m.email === email)) {
                             const isOwner = groups[id].admin === email;
                             list.innerHTML += `
-                                <div class="silk-card p-6 bg-gray-50 flex justify-between items-center mb-2 transition-all hover:shadow-md">
+                                <div class="silk-card p-6 bg-white flex justify-between items-center mb-2 transition-all hover:shadow-2xl hover:scale-[1.02] border border-gray-100">
                                     <div class="cursor-pointer flex-1" onclick="startApp('${id}', '${groups[id].name}')">
                                         <h4 class="font-bold text-gray-800">${groups[id].name}</h4>
-                                        <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id} ${isOwner ? '• OWNER' : ''}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p>
+                                            ${isOwner ? '<span class="text-[8px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-black">ADMIN</span>' : ''}
+                                        </div>
                                     </div>
                                     <button onclick="openDeleteWarning('${id}', '${groups[id].name}', ${isOwner})" class="p-3 text-red-400 hover:bg-red-50 rounded-xl transition-colors">
                                         <i class="fa-solid fa-trash-can"></i>
