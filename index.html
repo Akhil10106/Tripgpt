@@ -4,194 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TripSplit Pro | Ultimate Cloud</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <style>
         :root { --primary: #4f46e5; --bg: #f8fafc; }
         body { background: var(--bg); color: #1e293b; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
-        .silk-card { background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); border-radius: 2rem; }
+        .silk-card { background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); border-radius: 2.5rem; }
+        .rounded-silk { border-radius: 2rem; }
+        .rounded-button { border-radius: 1.5rem; }
         .btn-premium { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; transition: all 0.3s ease; }
-        .view-pane { display: none; }
-        .active-view { display: block; }
-        .member-chip { background: #ffffff; border: 2px solid #f1f5f9; padding: 10px 18px; border-radius: 1rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .active-chip { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
-        .theme-0 { background: #e0e7ff; color: #4338ca; }
-        .theme-1 { background: #fce7f3; color: #be185d; }
-        .theme-2 { background: #fef3c7; color: #b45309; }
-        .theme-3 { background: #d1fae5; color: #047857; }
-        .theme-default { background: #f1f5f9; color: #475569; }
-        .badge-admin { background: #ef4444; color: white; padding: 2px 8px; border-radius: 6px; font-size: 9px; text-transform: uppercase; font-weight: 800; }
-        .collapse-content { display: none; }
         
-        #member-info-modal { display: none; }
-        .modal-pop { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .id-badge { cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
-        .id-badge:hover { color: #4f46e5; background: #eef2ff; border-radius: 4px; padding: 0 4px; }
+        .view-pane { display: none; }
+        .view-pane.active-view { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .timeline-scroll-area { height: 500px; overflow-y: auto; padding-right: 10px; }
+        .timeline-scroll-area::-webkit-scrollbar { width: 5px; }
+        .timeline-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .member-chip { border: 2px solid #f1f5f9; padding: 10px 18px; border-radius: 1.2rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; filter: grayscale(1); opacity: 0.6; }
+        .member-chip.active-chip { filter: grayscale(0); opacity: 1; border-color: currentColor; }
+
+        /* Theme colors for sync */
+        .theme-0 { background-color: #e0e7ff !important; color: #4338ca !important; }
+        .theme-1 { background-color: #fce7f3 !important; color: #be185d !important; }
+        .theme-2 { background-color: #fef3c7 !important; color: #b45309 !important; }
+        .theme-3 { background-color: #d1fae5 !important; color: #047857 !important; }
+        
+        /* Inline mini badges for timeline */
+        .mini-badge { padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; display: inline-block; margin-right: 4px; margin-top: 4px; }
+
+        .collapse-btn { width: 100%; text-align: left; padding: 1.5rem 2rem; background: #ffffff; border-radius: 2rem; border: 1px solid rgba(0,0,0,0.05); font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+        .collapse-content { display: none; padding: 1.5rem 2rem; }
+        .modal-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); display: none; items-center; justify-content: center; padding: 1.5rem; }
+        .modal-content-silk { background: white; width: 100%; max-width: 28rem; border-radius: 3rem; padding: 2.5rem; position: relative; animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .notif-dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background: #ef4444; border: 2px solid white; border-radius: 50%; display: none; }
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div id="member-info-modal" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="silk-card max-w-sm w-full p-8 modal-pop relative flex flex-col max-h-[80vh]">
-            <button onclick="closeMemberModal()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-colors"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
-            <div class="text-center mb-6">
-                <img id="modal-member-img" src="" class="w-24 h-24 rounded-3xl mx-auto border-4 border-white shadow-xl mb-4 object-cover">
-                <h2 id="modal-member-name" class="text-2xl font-black text-slate-900">...</h2>
-                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Trip Member</p>
-            </div>
-            <div class="bg-slate-50 p-5 rounded-2xl mb-6 text-center">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Total Contribution</p>
-                <p id="modal-member-balance" class="text-3xl font-black text-slate-800">₹0</p>
-            </div>
-            <button onclick="toggleMemberHistory()" id="history-toggle-btn" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all">
-                View Timeline
-            </button>
-            <div id="modal-history-pane" class="hidden mt-6 overflow-y-auto pr-2"><div id="modal-history-list" class="space-y-2"></div></div>
-        </div>
-    </div>
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    <div id="auth-screen" class="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6 overflow-y-auto">
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6">
         <div id="login-container" class="text-center max-w-sm w-full">
-            <h1 class="text-5xl font-black tracking-tighter text-slate-900 mb-2">TRIP<span class="text-indigo-600">SPLIT</span></h1>
-            <p class="text-slate-400 font-bold mb-8">Personal Expense Cloud</p>
-            <button id="google-login" class="bg-white border border-slate-200 flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all">
+            <h1 class="text-5xl font-black text-gray-900 mb-2 tracking-tighter">TRIP<span class="text-indigo-600">SPLIT</span></h1>
+            <button id="google-login-btn" class="bg-white border border-gray-200 flex items-center justify-center gap-3 w-full py-4 rounded-button font-bold text-lg shadow-sm hover:bg-gray-50 transition-all">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Continue with Google
             </button>
         </div>
         <div id="group-discovery" class="hidden w-full max-w-md">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-black">My Circles</h2>
-                <button onclick="signOutNow()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-lg">Logout</button>
+                <button onclick="signOutNow()" class="text-red-500 font-black text-xs bg-red-50 px-4 py-2 rounded-xl">Logout</button>
             </div>
-            <div id="my-groups-list" class="space-y-4 mb-6"></div>
-            <div id="recycle-bin-section" class="hidden mb-10 border-t pt-6">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recently Left</h4>
-                <div id="recycle-list" class="space-y-3"></div>
+            <div id="my-groups-list" class="space-y-4 mb-8"></div>
+            <div class="silk-card p-6 bg-indigo-600 shadow-xl">
+                <div class="flex gap-3">
+                    <button onclick="showJoinManual()" class="flex-1 bg-indigo-700 text-white py-4 rounded-button font-black text-[11px] uppercase tracking-widest border border-white/20">Join ID</button>
+                    <button onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-4 rounded-button font-black text-[11px] uppercase tracking-widest shadow-lg">Create New Group</button>
+                </div>
             </div>
-            <div class="silk-card p-6 bg-indigo-600 text-white flex gap-2 shadow-xl">
-                <button onclick="showJoinManual()" class="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-xs uppercase">Join ID</button>
-                <button onclick="showCreationPopup()" class="flex-1 bg-white text-indigo-600 py-3 rounded-xl font-bold text-xs uppercase">Create New</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="join-modal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6">
-        <div class="silk-card p-8 max-w-sm w-full text-center">
-            <h3 class="text-xl font-black mb-4">Join Circle</h3>
-            <input type="text" id="manual-id" placeholder="ID CODE" class="w-full p-4 bg-slate-50 rounded-xl font-black text-center mb-4 uppercase outline-none">
-            <div class="flex gap-2">
-                <button onclick="document.getElementById('join-modal').classList.add('hidden')" class="flex-1 font-bold text-slate-400">Cancel</button>
-                <button onclick="joinGroupManual()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black">Join</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="creation-popup" class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-6 overflow-y-auto">
-        <div class="silk-card p-8 max-w-lg w-full my-auto">
-            <h2 class="text-2xl font-black mb-6 text-slate-800">New Workspace</h2>
-            <input type="text" id="pop-group-name" placeholder="Circle Name" class="w-full bg-slate-50 p-4 rounded-xl font-bold mb-6 outline-none focus:ring-2 ring-indigo-500/20">
-            <button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all">Launch Space</button>
         </div>
     </div>
 
     <div id="app-content" class="max-w-6xl mx-auto hidden">
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-            <div class="flex items-center gap-4 cursor-pointer group" onclick="showView('profile-page')">
-                <img id="user-photo" src="" class="w-14 h-14 rounded-2xl border-2 border-white shadow-xl transition-transform group-hover:scale-105">
+            <div class="flex items-center gap-4 cursor-pointer" onclick="showView('profile-page')">
+                <img id="user-photo" src="" class="w-14 h-14 rounded-2xl border-2 border-white shadow-xl" style="width:3.5rem; height:3.5rem;">
                 <div>
-                    <h2 class="text-xl font-extrabold text-slate-900 leading-none" id="display-group-name">...</h2>
-                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1 id-badge" id="display-group-id" onclick="copyGroupId()">...</p>
+                    <h2 class="text-xl font-extrabold text-gray-900 leading-none" id="display-group-name">...</h2>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase mt-1 cursor-pointer" onclick="copyGroupId()">Click to Copy ID</p>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-slate-100 hover:bg-slate-50 transition-all">Home</button>
-                <button onclick="location.reload()" class="bg-slate-100 px-6 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all">Switch</button>
-                <button onclick="showView('settings-page')" class="bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg"><i class="fa-solid fa-sliders"></i></button>
+                <button onclick="showView('main-dashboard')" class="bg-white px-6 py-3 rounded-button text-sm font-bold shadow-sm border border-gray-100 hover:bg-gray-50 transition-all">Home</button>
+                <button onclick="location.reload()" class="bg-gray-100 px-6 py-3 rounded-button text-sm font-bold text-gray-600 hover:bg-gray-200 transition-all">Switch</button>
+                <div class="relative">
+                    <button onclick="showView('settings-page')" class="bg-gray-900 text-white px-5 py-3 rounded-button text-sm font-bold shadow-lg"><i class="fa-solid fa-sliders"></i></button>
+                    <div id="admin-notif-dot" class="notif-dot pulse"></div>
+                </div>
             </div>
         </header>
 
         <div id="main-dashboard" class="view-pane active-view">
             <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"></div>
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div class="lg:col-span-5">
-                    <div class="silk-card p-8 sticky top-10 border-slate-100">
-                        <h3 class="text-lg font-black mb-8 text-slate-800 italic text-center uppercase tracking-widest">Log Expense</h3>
-                        <div class="space-y-6">
-                            <input type="text" id="bill-title" placeholder="Description" class="w-full bg-slate-50 rounded-2xl p-4 font-bold outline-none">
-                            <div class="relative"><span class="absolute left-4 top-4 text-slate-400 font-black">₹</span><input type="number" id="bill-amount" placeholder="0.00" class="w-full bg-slate-50 rounded-2xl p-4 pl-10 text-2xl font-black border-none outline-none"></div>
-                            <div id="split-selectors" class="flex flex-wrap gap-2"></div>
-                            <button onclick="logExpense()" class="w-full btn-premium py-5 rounded-2xl font-black uppercase mt-4 shadow-xl">Publish</button>
-                        </div>
+                <div class="lg:col-span-5 silk-card p-8 h-fit">
+                    <h3 class="text-lg font-black mb-8 italic uppercase text-center tracking-widest">Log Expense</h3>
+                    <div class="space-y-6">
+                        <input type="text" id="bill-title" placeholder="Description" class="w-full bg-gray-50 rounded-silk p-4 font-bold outline-none border-none">
+                        <div class="relative"><span class="absolute left-4 top-4 text-gray-400 font-black">₹</span><input type="number" id="bill-amount" placeholder="0.00" class="w-full bg-gray-50 rounded-silk p-4 pl-10 text-2xl font-black outline-none border-none"></div>
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-[-1rem]">Involved Members</p>
+                        <div id="split-selectors" class="flex flex-wrap gap-2 pt-2"></div>
+                        <button onclick="logExpense()" class="w-full btn-premium py-5 rounded-button font-black uppercase mt-4 shadow-lg">Publish</button>
                     </div>
                 </div>
-                <div class="lg:col-span-7">
-                    <div class="silk-card p-8 min-h-[500px]">
-                        <h3 class="text-xl font-black text-slate-800 mb-6 border-b pb-4">Timeline <span id="grand-total" class="float-right text-indigo-600 text-sm font-black"></span></h3>
-                        <div id="activity-feed" class="space-y-5"></div>
-                    </div>
+                <div class="lg:col-span-7 silk-card p-8">
+                    <h3 class="text-xl font-black border-b pb-4 mb-6">Timeline <span id="grand-total" class="float-right text-indigo-600 text-sm">₹0</span></h3>
+                    <div id="activity-feed" class="space-y-5 timeline-scroll-area"></div>
                 </div>
             </div>
         </div>
 
-        <div id="settings-page" class="view-pane max-w-2xl mx-auto">
-            <div class="space-y-6">
-                <div id="admin-tools" class="hidden silk-card overflow-hidden bg-indigo-50/50 border-indigo-100">
-                    <button onclick="toggleCollapse('add-user-collapse')" class="w-full p-8 flex justify-between items-center hover:bg-white transition-all">
-                        <h3 class="text-xl font-black text-indigo-900">Manage Members</h3>
-                        <i class="fa-solid fa-user-plus text-indigo-400"></i>
-                    </button>
-                    <div id="add-user-collapse" class="collapse-content px-8 pb-8">
-                        <div class="p-6 bg-white rounded-3xl space-y-4 border shadow-sm">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" id="new-mem-name" placeholder="Name" class="bg-slate-50 p-4 rounded-xl font-bold border-none outline-none">
-                                <input type="email" id="new-mem-email" placeholder="Gmail ID" class="bg-slate-50 p-4 rounded-xl font-bold border-none outline-none">
-                            </div>
-                            <button onclick="adminAddMember()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest">Add Member Instantly</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="silk-card overflow-hidden">
-                    <div class="p-8 flex justify-between items-center bg-slate-50/50 border-b">
-                        <h3 class="text-xl font-black">Circle Members</h3>
-                    </div>
-                    <div class="p-8"><div id="member-settings-list" class="space-y-3"></div></div>
-                </div>
-
-                <div id="admin-only-reset" class="hidden silk-card p-8 border-red-50 bg-red-50/20 text-center">
-                    <button onclick="resetTripHistory()" class="w-full bg-white border-2 border-red-100 text-red-500 font-black py-4 rounded-xl shadow-sm">Reset All History</button>
-                </div>
+        <div id="settings-page" class="view-pane max-w-2xl mx-auto space-y-4">
+            <div id="admin-tickets-wrapper" class="hidden">
+                <button onclick="toggleCollapse('tickets-collapse')" class="collapse-btn bg-red-50 border-red-100"><span class="text-red-900">Pending Join Requests</span><i class="fa-solid fa-ticket text-red-400"></i></button>
+                <div id="tickets-collapse" class="collapse-content bg-white mt-2 rounded-silk border border-red-100"><div id="ticket-list" class="space-y-3"></div></div>
             </div>
+            <div id="admin-tools-wrapper" class="hidden">
+                <button onclick="toggleCollapse('admin-tools-collapse')" class="collapse-btn"><span>Add Member Manually</span><i class="fa-solid fa-chevron-down opacity-30"></i></button>
+                <div id="admin-tools-collapse" class="collapse-content bg-white mt-2 rounded-silk border border-gray-100"><div class="flex flex-col gap-3"><input type="text" id="new-mem-name" placeholder="Name" class="w-full p-4 bg-gray-50 rounded-xl font-bold border-none outline-none"><input type="email" id="new-mem-email" placeholder="Email" class="w-full p-4 bg-gray-50 rounded-xl font-bold border-none outline-none"><button onclick="adminAddMember()" class="bg-indigo-600 text-white w-full py-4 rounded-xl font-black text-xs uppercase">Confirm & Add</button></div></div>
+            </div>
+            <button onclick="toggleCollapse('member-list-collapse')" class="collapse-btn"><span>Circle Members</span><i class="fa-solid fa-users opacity-30"></i></button>
+            <div id="member-list-collapse" class="collapse-content bg-white mt-2 rounded-silk border border-gray-100"><div id="member-settings-list" class="space-y-3"></div></div>
+            <div class="p-8 silk-card bg-gray-50 text-center"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Workspace ID</p><p onclick="copyGroupId()" class="text-xl font-black text-indigo-600 cursor-pointer tracking-tighter" id="settings-id-display">...</p></div>
         </div>
-        
-        <div id="profile-page" class="view-pane max-w-md mx-auto text-center p-10 silk-card">
-            <img id="profile-img-large" src="" class="w-28 h-28 rounded-3xl mx-auto mb-6 border-4 border-white shadow-2xl">
-            <h2 id="profile-name-large" class="text-3xl font-black">...</h2>
-            <p id="profile-email-large" class="text-slate-400 font-medium mb-6">...</p>
-            <div class="flex justify-center mb-10"><div id="profile-account-type-badge">...</div></div>
-            <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-2xl transition-all shadow-sm">Logout Account</button>
+
+        <div id="profile-page" class="view-pane max-w-md mx-auto text-center silk-card p-10">
+            <img id="profile-img-large" src="" class="w-28 h-28 rounded-3xl mx-auto mb-6 shadow-2xl"><h2 id="profile-name-large" class="text-3xl font-black text-gray-900 tracking-tight">...</h2><p id="profile-email-large" class="text-gray-400 font-bold mb-6">...</p><div class="space-y-2 mb-10 text-center"><div id="profile-account-type" class="badge-status inline-block">Member</div><div onclick="copyGroupId()" class="bg-gray-50 p-4 rounded-2xl cursor-pointer mt-4"><p class="text-[9px] font-black text-gray-400 uppercase">Circle ID</p><p class="font-black text-gray-800" id="profile-id-display">...</p></div></div><button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-button">Logout</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, get, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    <div id="creation-modal-overlay" class="modal-overlay"><div class="modal-content-silk"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h2 class="text-2xl font-black mb-6 text-gray-900 text-center">New Group</h2><input type="text" id="pop-group-name" placeholder="Group Name" class="w-full bg-gray-50 p-4 rounded-silk font-bold mb-6 border-none outline-none"><button onclick="finalizeCreation()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase tracking-widest shadow-xl">Launch</button></div></div>
+    <div id="join-modal-overlay" class="modal-overlay"><div class="modal-content-silk text-center"><button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300 hover:text-black"><i class="fa-solid fa-circle-xmark text-2xl"></i></button><h3 class="text-xl font-black mb-6 tracking-tight">Join Circle ID</h3><input type="text" id="manual-id" placeholder="ENTER ID" class="w-full p-4 bg-gray-50 rounded-silk font-black text-center mb-6 uppercase border-none outline-none"><button onclick="requestJoinGroup()" class="w-full bg-indigo-600 text-white py-4 rounded-button font-black uppercase">Send Request</button></div></div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <script>
         const firebaseConfig = { apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4", authDomain: "trip-ddc48.firebaseapp.com", databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com", projectId: "trip-ddc48", storageBucket: "trip-ddc48.firebasestorage.app" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        
-        let currentGroupId = null, groupMembers = [], isAdmin = false, globalExpenses = {}, recycleBin = [];
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        let currentGroupId = null, groupMembers = [], isAdmin = false;
 
-        onAuthStateChanged(auth, async (u) => {
+        auth.onAuthStateChanged(async (u) => {
             if (u) {
                 document.getElementById('user-photo').src = u.photoURL;
+                document.getElementById('profile-img-large').src = u.photoURL;
+                document.getElementById('profile-name-large').innerText = u.displayName;
+                document.getElementById('profile-email-large').innerText = u.email;
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('group-discovery').classList.remove('hidden');
                 discoverGroups(u.email.toLowerCase());
@@ -201,21 +161,17 @@
             }
         });
 
-        async function discoverGroups(email) {
-            onValue(ref(db, 'groups'), (snap) => {
+        function discoverGroups(email) {
+            db.ref('groups').on('value', (snap) => {
                 const list = document.getElementById('my-groups-list'); list.innerHTML = '';
                 if (snap.exists()) {
                     const groups = snap.val();
                     for (let id in groups) {
                         const members = groups[id].members || [];
                         if (members.some(m => m.email === email)) {
-                            list.innerHTML += `<div class="silk-card p-6 bg-slate-50 flex justify-between items-center cursor-pointer hover:border-indigo-500 transition-all mb-2" onclick="startApp('${id}', '${groups[id].name}')">
-                                <div><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p><h4 class="font-bold text-slate-800">${groups[id].name}</h4></div>
-                                <button onclick="event.stopPropagation(); moveToRecycleBin('${id}', '${groups[id].name}')" class="p-3 text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>`;
+                            list.innerHTML += `<div class="silk-card p-6 bg-gray-50 flex justify-between items-center cursor-pointer mb-2" onclick="startApp('${id}', '${groups[id].name}')"><div><h4 class="font-bold text-gray-800">${groups[id].name}</h4><p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest">${id}</p></div><i class="fa-solid fa-chevron-right text-gray-300"></i></div>`;
                         }
                     }
-                    renderRecycleBin();
                 }
             });
         }
@@ -224,156 +180,131 @@
             currentGroupId = id;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('display-group-id').innerText = id;
+            document.getElementById('profile-id-display').innerText = id;
+            document.getElementById('settings-id-display').innerText = id;
             document.getElementById('display-group-name').innerText = name;
             
-            const u = auth.currentUser;
-            document.getElementById('profile-img-large').src = u.photoURL;
-            document.getElementById('profile-name-large').innerText = u.displayName;
-            document.getElementById('profile-email-large').innerText = u.email;
-
-            onValue(ref(db, `groups/${id}`), (snapshot) => {
+            db.ref(`groups/${id}`).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if(!data) { location.reload(); return; }
+                if(!data) return;
                 groupMembers = data.members || [];
-                globalExpenses = data.expenses || {};
-                isAdmin = (data.admin === u.email.toLowerCase());
-                
-                const badge = document.getElementById('profile-account-type-badge');
-                if(isAdmin) {
-                    document.getElementById('admin-only-reset').classList.remove('hidden');
-                    document.getElementById('admin-tools').classList.remove('hidden');
-                    badge.className = "badge-profile-admin"; badge.innerText = "Admin Root Access";
-                } else {
-                    document.getElementById('admin-only-reset').classList.add('hidden');
-                    document.getElementById('admin-tools').classList.add('hidden');
-                    badge.className = "badge-profile-member"; badge.innerText = "Verified Member";
-                }
-                renderUI(globalExpenses);
+                isAdmin = (data.admin === auth.currentUser.email.toLowerCase());
+                document.getElementById('admin-tools-wrapper').classList.toggle('hidden', !isAdmin);
+                document.getElementById('admin-tickets-wrapper').classList.toggle('hidden', !isAdmin);
+                renderUI(data.expenses || {});
                 renderSettingsMembers(data.admin);
+                if(isAdmin) listenForTickets(id);
             });
-        };
-
-        // ADMIN FEATURES: ADD/REMOVE MEMBERS
-        window.adminAddMember = async () => {
-            const n = document.getElementById('new-mem-name').value.trim();
-            const e = document.getElementById('new-mem-email').value.trim().toLowerCase();
-            if(!n || !e) return alert("Fill Name and Gmail");
-            if(groupMembers.some(m => m.email === e)) return alert("User already exists");
-
-            groupMembers.push({ name: n, email: e });
-            await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
-            document.getElementById('new-mem-name').value = '';
-            document.getElementById('new-mem-email').value = '';
-            toggleCollapse('add-user-collapse');
-        };
-
-        window.adminRemoveMember = async (index) => {
-            const m = groupMembers[index];
-            if(m.email === auth.currentUser.email.toLowerCase()) return alert("Admins cannot remove themselves.");
-            if(confirm(`Permanently remove ${m.name} from this trip?`)) {
-                groupMembers.splice(index, 1);
-                await set(ref(db, `groups/${currentGroupId}/members`), groupMembers);
-            }
         };
 
         function renderSettingsMembers(adminEmail) {
-            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `
-                <div class="p-5 silk-card theme-${i < 4 ? i : 'default'} flex justify-between items-center shadow-sm">
-                    <div><p class="font-black text-slate-800">${m.name} ${m.email === adminEmail ? '<span class="badge-admin ml-1">Admin</span>' : ''}</p><p class="text-[10px] font-bold opacity-60 uppercase">${m.email}</p></div>
-                    ${isAdmin && m.email !== adminEmail ? `<button onclick="adminRemoveMember(${i})" class="p-2 text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-user-minus"></i></button>` : ''}
-                </div>`).join('');
+            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `<div class="p-5 silk-card theme-${i % 4} flex justify-between items-center shadow-sm"><div><p class="font-black text-gray-800">${m.name} ${m.email === adminEmail ? '<span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-md ml-1 uppercase">Owner</span>' : ''}</p><p class="text-xs font-bold opacity-60 uppercase tracking-tighter">${m.email}</p></div>${isAdmin && m.email !== adminEmail ? `<button onclick="adminRemoveMember(${i})" class="text-red-400 p-2"><i class="fa-solid fa-user-minus"></i></button>` : ''}</div>`).join('');
         }
 
-        // Dashboard & UI
         function renderUI(expenses) {
-            document.getElementById('split-selectors').innerHTML = groupMembers.map(m => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
-            let total = 0, balances = {}; groupMembers.forEach(m => balances[m.name] = 0);
+            document.getElementById('split-selectors').innerHTML = groupMembers.map((m, i) => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip theme-${i % 4}"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
+            
+            let total = 0, balances = {}; 
+            groupMembers.forEach(m => balances[m.name] = 0);
             const feed = document.getElementById('activity-feed'); feed.innerHTML = '';
-            const entries = Object.entries(expenses).reverse();
-            entries.forEach(([key, exp]) => {
-                total += exp.amount; const split = Math.round(exp.amount / (exp.involved?.length || 1));
-                exp.involved?.forEach(n => balances[n] += split);
-                const adminControls = isAdmin ? `<div class="flex gap-2 ml-4"><button onclick="editExpense('${key}', ${exp.amount}, '${exp.title}')" class="text-indigo-400"><i class="fa-solid fa-pen"></i></button><button onclick="deleteExpense('${key}')" class="text-red-300"><i class="fa-solid fa-trash"></i></button></div>` : '';
-                feed.innerHTML += `<div class="p-6 bg-slate-50 rounded-2xl flex justify-between items-center mb-3"><div><h4 class="font-extrabold text-slate-800">${exp.title}</h4><p class="text-[10px] uppercase text-slate-400">By ${exp.by}</p></div><div class="flex items-center"><div class="text-right"><p class="text-xl font-black text-slate-900">₹${exp.amount}</p></div>${adminControls}</div></div>`;
+            
+            Object.entries(expenses).reverse().forEach(([key, exp]) => {
+                total += exp.amount; 
+                const split = Math.round(exp.amount / (exp.involved?.length || 1));
+                
+                // GENERATE TIMELINE BREAKDOWN
+                let breakdownHTML = '';
+                exp.involved?.forEach(name => {
+                    if (balances.hasOwnProperty(name)) balances[name] += split;
+                    // Find member index for color sync
+                    const mIdx = groupMembers.findIndex(gm => gm.name === name);
+                    breakdownHTML += `<span class="mini-badge theme-${mIdx % 4}">${name}: ₹${split}</span>`;
+                });
+
+                feed.innerHTML += `
+                    <div class="p-6 bg-gray-50 rounded-silk flex flex-col mb-3 transition-all hover:bg-white border border-transparent hover:border-gray-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <div><h4 class="font-extrabold text-gray-800">${exp.title}</h4></div>
+                            <p class="text-xl font-black text-gray-900">₹${exp.amount}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-1">
+                            ${breakdownHTML}
+                        </div>
+                    </div>`;
             });
-            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => {
-                const bal = balances[m.name] || 0;
-                return `<div onclick="openMemberModal('${m.name}', ${bal})" class="silk-card p-6 theme-${i < 4 ? i : 'default'} shadow-sm cursor-pointer hover:scale-105 transition-transform"><p class="text-[10px] font-black uppercase opacity-70">${m.name}</p><p class="text-2xl font-black">₹${bal}</p></div>`;
-            }).join('');
-            document.getElementById('grand-total').innerText = "Total ₹" + total;
+
+            document.getElementById('grand-total').innerText = "₹" + total.toLocaleString();
+            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `<div class="silk-card p-6 theme-${i % 4} transition-transform hover:scale-105 shadow-sm"><p class="text-[10px] font-black uppercase opacity-70 tracking-widest">${m.name}</p><p class="text-2xl font-black">₹${balances[m.name] || 0}</p></div>`).join('');
         }
 
-        // Shared functionality
-        window.copyGroupId = () => { navigator.clipboard.writeText(currentGroupId).then(() => { const b = document.getElementById('display-group-id'); const o = b.innerText; b.innerText = "Copied!"; setTimeout(() => b.innerText = o, 2000); }); };
-        window.openMemberModal = (name, bal) => {
-            document.getElementById('modal-member-name').innerText = name;
-            document.getElementById('modal-member-balance').innerText = `₹${Math.round(bal)}`;
-            document.getElementById('modal-member-img').src = `https://ui-avatars.com/api/?name=${name}&background=4f46e5&color=fff&bold=true&size=128`;
-            const hList = document.getElementById('modal-history-list'); hList.innerHTML = '';
-            const filtered = Object.values(globalExpenses).filter(e => e.involved?.includes(name)).reverse();
-            if(filtered.length === 0) hList.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-xs">No involvement logged.</p>`;
-            else filtered.forEach(e => { hList.innerHTML += `<div class="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center mb-1"><div><h4 class="font-bold text-xs">${e.title}</h4><p class="text-[8px] text-slate-400 uppercase">${e.date}</p></div><p class="text-xs font-black text-indigo-600">₹${Math.round(e.amount/e.involved.length)}</p></div>`; });
-            document.getElementById('modal-history-pane').classList.add('hidden');
-            document.getElementById('history-toggle-btn').innerText = "View contribution Timeline";
-            document.getElementById('member-info-modal').style.display = 'flex';
-        };
-        window.moveToRecycleBin = async (id, name) => {
-            if(confirm(`Leave ${name}?`)) {
-                const uEmail = auth.currentUser.email.toLowerCase();
-                const snap = await get(ref(db, `groups/${id}/members`));
-                if(snap.exists()) {
-                    const oldMembers = snap.val();
-                    recycleBin.push({ id, name, userData: oldMembers.find(m => m.email === uEmail) });
-                    await set(ref(db, `groups/${id}/members`), oldMembers.filter(m => m.email !== uEmail));
-                    renderRecycleBin();
+        // ... Other existing helper functions (Tickets, Auth, Modals, Log Expense etc)
+        function listenForTickets(groupId) {
+            db.ref(`groups/${groupId}/tickets`).on('value', snap => {
+                const list = document.getElementById('ticket-list');
+                const dot = document.getElementById('admin-notif-dot');
+                list.innerHTML = '';
+                if(!snap.exists()) { list.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">No pending requests</p>'; dot.style.display = 'none'; return; }
+                dot.style.display = 'block';
+                snap.forEach(ticket => {
+                    const t = ticket.val();
+                    list.innerHTML += `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center border border-gray-100"><div><p class="font-black text-xs text-gray-800">${t.name}</p><p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">${t.email}</p></div><div class="flex gap-2"><button onclick="resolveTicket('${ticket.key}', true, '${t.name}', '${t.email}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Allow</button><button onclick="resolveTicket('${ticket.key}', false)" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Deny</button></div></div>`;
+                });
+            });
+        }
+
+        async function resolveTicket(ticketId, allow, name, email) {
+            if(allow) {
+                if(!groupMembers.some(m => m.email === email)) {
+                    groupMembers.push({ name, email });
+                    await db.ref(`groups/${currentGroupId}/members`).set(groupMembers);
                 }
             }
-        };
-        function renderRecycleBin() {
-            const section = document.getElementById('recycle-bin-section');
-            const list = document.getElementById('recycle-list');
-            if(recycleBin.length === 0) { section.classList.add('hidden'); return; }
-            section.classList.remove('hidden');
-            list.innerHTML = recycleBin.map((item, index) => `<div class="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200"><span class="text-xs font-bold text-slate-500">${item.name}</span><button onclick="restoreFromBin(${index})" class="text-[10px] font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border">Undo</button></div>`).join('');
+            await db.ref(`groups/${currentGroupId}/tickets/${ticketId}`).remove();
         }
-        window.restoreFromBin = async (index) => {
-            const item = recycleBin[index];
-            const snap = await get(ref(db, `groups/${item.id}/members`));
-            if(snap.exists()) {
-                const m = snap.val(); m.push(item.userData);
-                await set(ref(db, `groups/${item.id}/members`), m);
-                recycleBin.splice(index, 1); renderRecycleBin();
-            }
+
+        window.requestJoinGroup = async () => {
+            const id = document.getElementById('manual-id').value.trim().toUpperCase();
+            if(!id) return;
+            const snap = await db.ref(`groups/${id}`).get();
+            if(snap.exists()){
+                const u = auth.currentUser;
+                await db.ref(`groups/${id}/tickets`).push({ name: u.displayName, email: u.email.toLowerCase() });
+                alert("Request Raised!"); hideModals();
+            } else alert("Invalid Circle ID");
         };
-        window.editExpense = async (key, oldAmt, oldTitle) => {
-            const nt = prompt("New Description:", oldTitle); const na = prompt("New Amount:", oldAmt);
-            if(nt && na) await update(ref(db, `groups/${currentGroupId}/expenses/${key}`), { title: nt, amount: parseFloat(na) });
+
+        window.toggleCollapse = (id) => { const el = document.getElementById(id); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'block' : 'none'; };
+        window.showView = (v) => { document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); document.getElementById(v).classList.add('active-view'); };
+        window.showCreationPopup = () => document.getElementById('creation-modal-overlay').style.display = 'flex';
+        window.showJoinManual = () => document.getElementById('join-modal-overlay').style.display = 'flex';
+        window.hideModals = () => { document.getElementById('creation-modal-overlay').style.display = 'none'; document.getElementById('join-modal-overlay').style.display = 'none'; };
+        
+        window.finalizeCreation = async () => {
+            const gn = document.getElementById('pop-group-name').value.trim();
+            if(!gn) return;
+            const id = "CIRCLE-" + Math.random().toString(36).substr(2, 4).toUpperCase();
+            await db.ref(`groups/${id}`).set({ name: gn, members: [{name: auth.currentUser.displayName.split(' ')[0], email: auth.currentUser.email.toLowerCase()}], admin: auth.currentUser.email.toLowerCase() });
+            hideModals();
         };
-        window.deleteExpense = async (key) => { if(confirm("Delete expense?")) await remove(ref(db, `groups/${currentGroupId}/expenses/${key}`)); };
-        window.resetTripHistory = async () => { if(confirm("DANGER: Clear data?")) await remove(ref(db, `groups/${currentGroupId}/expenses`)); };
-        window.toggleMemberHistory = () => { const p = document.getElementById('modal-history-pane'); p.classList.toggle('hidden'); document.getElementById('history-toggle-btn').innerText = p.classList.contains('hidden') ? "View contribution Timeline" : "Hide Timeline"; };
-        window.closeMemberModal = () => document.getElementById('member-info-modal').style.display = 'none';
+
         window.logExpense = () => {
             const t = document.getElementById('bill-title').value, a = parseFloat(document.getElementById('bill-amount').value);
             const sel = Array.from(document.querySelectorAll('#split-selectors .active-chip')).map(b => b.dataset.name);
-            if(t && a && sel.length) { push(ref(db, `groups/${currentGroupId}/expenses`), { title: t, amount: a, involved: sel, by: auth.currentUser.displayName.split(' ')[0], date: new Date().toLocaleDateString() }); document.getElementById('bill-title').value = ''; document.getElementById('bill-amount').value = ''; }
+            if(t && a && sel.length) { 
+                db.ref(`groups/${currentGroupId}/expenses`).push({ title: t, amount: a, involved: sel, by: auth.currentUser.displayName.split(' ')[0], date: new Date().toLocaleDateString() }); 
+                document.getElementById('bill-title').value = ''; document.getElementById('bill-amount').value = ''; 
+            }
         };
-        window.toggleCollapse = (id) => { const el = document.getElementById(id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; };
-        window.showView = (v) => { document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active-view')); document.getElementById(v).classList.add('active-view'); };
-        window.signOutNow = () => signOut(auth).then(() => location.reload());
-        document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
-        window.showCreationPopup = () => document.getElementById('creation-popup').classList.remove('hidden');
-        window.finalizeCreation = async () => { const gn = document.getElementById('pop-group-name').value.trim(); if(!gn) return; const id = "CIRCLE-" + Math.random().toString(36).substr(2, 4).toUpperCase(); const admin = {name: auth.currentUser.displayName.split(' ')[0], email: auth.currentUser.email.toLowerCase()}; await set(ref(db, `groups/${id}`), { name: gn, members: [admin], admin: admin.email }); location.reload(); };
-        window.showJoinManual = () => document.getElementById('join-modal').classList.remove('hidden');
-        window.joinGroupManual = async () => {
-            const id = document.getElementById('manual-id').value.trim().toUpperCase(); const snap = await get(ref(db, `groups/${id}`));
-            if(snap.exists()) {
-                const members = snap.val().members || []; const u = auth.currentUser;
-                if(!members.some(m => m.email === u.email.toLowerCase())) { members.push({ name: u.displayName.split(' ')[0], email: u.email.toLowerCase() }); await set(ref(db, `groups/${id}/members`), members); }
-                startApp(id, snap.val().name); document.getElementById('join-modal').classList.add('hidden');
-            } else alert("Invalid ID");
+
+        window.adminAddMember = async () => {
+            const n = document.getElementById('new-mem-name').value.trim(), e = document.getElementById('new-mem-email').value.trim().toLowerCase();
+            if(n && e) { if(!groupMembers.some(m => m.email === e)) { groupMembers.push({ name: n, email: e }); await db.ref(`groups/${currentGroupId}/members`).set(groupMembers); } }
         };
+
+        window.adminRemoveMember = async (i) => { if(confirm("Permanently remove?")) { groupMembers.splice(i, 1); await db.ref(`groups/${currentGroupId}/members`).set(groupMembers); } };
+        window.signOutNow = () => auth.signOut().then(() => location.reload());
+        document.getElementById('google-login-btn').onclick = () => auth.signInWithPopup(provider);
+        window.copyGroupId = () => { navigator.clipboard.writeText(currentGroupId).then(() => alert("Circle ID Copied!")); };
     </script>
 </body>
 </html>
