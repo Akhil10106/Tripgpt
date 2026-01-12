@@ -38,7 +38,7 @@
         .theme-2 { background-color: #fef3c7 !important; color: #b45309 !important; }
         .theme-3 { background-color: #d1fae5 !important; color: #047857 !important; }
         
-        .mini-badge { padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; display: inline-block; margin-right: 4px; margin-top: 4px; }
+        .mini-badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; display: inline-block; margin-right: 4px; margin-top: 4px; }
 
         .collapse-btn { width: 100%; text-align: left; padding: 1.5rem 2rem; background: #ffffff; border-radius: 2rem; border: 1px solid rgba(0,0,0,0.05); font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
         .collapse-content { display: none; padding: 1.5rem 2rem; }
@@ -69,6 +69,10 @@
         @keyframes splitRight { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(15px); opacity: 0.8; } }
         .logo-underline { height: 6px; width: 100%; background: #4f46e5; border-radius: 10px; margin-top: -10px; transform: scaleX(0.4); animation: lineGrow 3s infinite ease-in-out; }
         @keyframes lineGrow { 0%, 100% { transform: scaleX(0.4); } 50% { transform: scaleX(1); } }
+        
+        .member-detail-scroll { max-height: 200px; overflow-y: auto; display: none; margin-top: 1rem; border-top: 1px solid #f1f5f9; padding-top: 1rem; }
+        .member-stat-card { transition: all 0.3s ease; cursor: pointer; }
+        .member-stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -165,12 +169,36 @@
         <div id="profile-page" class="view-pane max-w-md mx-auto text-center silk-card p-10">
             <img id="profile-img-large" src="" class="w-28 h-28 rounded-3xl mx-auto mb-6 shadow-2xl">
             <h2 id="profile-name-large" class="text-3xl font-black text-gray-900 tracking-tight">...</h2>
-            <p id="profile-email-large" class="text-gray-400 font-bold mb-6">...</p>
+            <p id="profile-email-large" class="text-gray-400 font-bold mb-2">...</p>
+            <p id="profile-account-type" class="text-[10px] font-black text-indigo-500 bg-indigo-50 inline-block px-4 py-1 rounded-full uppercase tracking-widest mb-6">...</p>
             <div onclick="copyGroupId()" class="bg-gray-50 p-4 rounded-2xl cursor-pointer mt-4">
                 <p class="text-[9px] font-black text-gray-400 uppercase">Workspace ID (Click to Copy)</p>
                 <p class="font-black text-gray-800" id="profile-id-display">...</p>
             </div>
             <button onclick="signOutNow()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-button mt-6">Logout</button>
+        </div>
+    </div>
+
+    <div id="member-modal-overlay" class="modal-overlay">
+        <div class="modal-content-silk text-center">
+            <button onclick="hideModals()" class="absolute top-6 right-6 text-gray-300"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            <div class="w-24 h-24 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl text-indigo-500 overflow-hidden border-2 border-indigo-100">
+                <img id="modal-member-img" src="" class="hidden w-full h-full object-cover">
+                <i id="modal-member-icon" class="fa-solid fa-user"></i>
+            </div>
+            <h3 id="modal-member-name" class="text-2xl font-black text-gray-900">Member Name</h3>
+            <p id="modal-member-email" class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">email@example.com</p>
+            
+            <div class="bg-gray-50 p-6 rounded-2xl mb-4">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total Group Balance</p>
+                <p id="modal-member-balance" class="text-3xl font-black text-indigo-600">₹0</p>
+            </div>
+
+            <button onclick="toggleMemberContribution()" class="w-full bg-white border border-gray-200 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-all">
+                <span id="contribution-toggle-text">Show All Contributions</span>
+            </button>
+
+            <div id="member-contribution-list" class="member-detail-scroll space-y-2"></div>
         </div>
     </div>
 
@@ -207,7 +235,7 @@
         const firebaseConfig = { apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4", authDomain: "trip-ddc48.firebaseapp.com", databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com", projectId: "trip-ddc48", storageBucket: "trip-ddc48.firebasestorage.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database(), auth = firebase.auth(), provider = new firebase.auth.GoogleAuthProvider();
-        let currentGroupId = null, groupMembers = [], isAdmin = false;
+        let currentGroupId = null, groupMembers = [], isAdmin = false, currentGroupExpenses = {};
 
         function showToast(msg) {
             const container = document.getElementById('toast-container');
@@ -271,43 +299,146 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('display-group-name').innerText = name;
             document.getElementById('settings-id-display').innerText = id;
-            document.getElementById('profile-id-display').innerText = id; // Update Profile ID field
+            document.getElementById('profile-id-display').innerText = id;
 
             db.ref(`groups/${id}`).on('value', (snapshot) => {
                 const data = snapshot.val(); if(!data) return;
                 groupMembers = data.members || [];
+                currentGroupExpenses = data.expenses || {};
                 isAdmin = (data.admin === auth.currentUser.email.toLowerCase());
+                
+                // Update profile account type based on group role
+                document.getElementById('profile-account-type').innerText = isAdmin ? "Group Admin" : "Group Member";
+                
                 document.getElementById('admin-tools-wrapper').classList.toggle('hidden', !isAdmin);
                 document.getElementById('admin-tickets-wrapper').classList.toggle('hidden', !isAdmin);
-                renderUI(data.expenses || {});
+                renderUI(currentGroupExpenses);
                 renderSettingsMembers(data.admin);
                 if(isAdmin) listenForTickets(id);
             });
         };
 
         function renderSettingsMembers(adminEmail) {
-            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => `<div class="p-5 silk-card theme-${i % 4} flex justify-between items-center"><div><p class="font-black text-gray-800">${m.name}</p><p class="text-xs font-bold opacity-60 uppercase">${m.email}</p></div>${isAdmin && m.email !== adminEmail ? `<button onclick="adminRemoveMember(${i})" class="text-red-400 p-2"><i class="fa-solid fa-user-minus"></i></button>` : ''}</div>`).join('');
+            document.getElementById('member-settings-list').innerHTML = groupMembers.map((m, i) => {
+                const isMemberAdmin = m.email.toLowerCase() === adminEmail.toLowerCase();
+                return `
+                <div class="p-5 silk-card theme-${i % 4} flex justify-between items-center cursor-pointer" onclick="openMemberProfile('${m.name}', '${m.email}', ${i % 4})">
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <p class="font-black text-gray-800">${m.name}</p>
+                            ${isMemberAdmin ? `<span class="bg-indigo-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Admin</span>` : ''}
+                        </div>
+                        <p class="text-xs font-bold opacity-60 uppercase">${m.email}</p>
+                    </div>
+                    ${isAdmin && !isMemberAdmin ? `<button onclick="event.stopPropagation(); adminRemoveMember(${i})" class="text-red-400 p-2"><i class="fa-solid fa-user-minus"></i></button>` : ''}
+                </div>`;
+            }).join('');
         }
 
         function renderUI(expenses) {
             document.getElementById('split-selectors').innerHTML = groupMembers.map((m, i) => `<button onclick="this.classList.toggle('active-chip')" data-name="${m.name}" class="member-chip active-chip theme-${i % 4}"><i class="fa-solid fa-check"></i> ${m.name}</button>`).join('');
             let total = 0, balances = {}; groupMembers.forEach(m => balances[m.name] = 0);
             const feed = document.getElementById('activity-feed'); feed.innerHTML = '';
+            
             Object.entries(expenses).reverse().forEach(([key, exp]) => {
-                if (exp.type === 'settlement') balances[exp.payer] -= exp.amount;
-                else {
-                    total += exp.amount; const split = Math.round(exp.amount / (exp.involved?.length || 1));
-                    exp.involved?.forEach(name => { if (balances.hasOwnProperty(name)) balances[name] += split; });
+                let splitDetailHTML = '';
+
+                if (exp.type === 'settlement') {
+                    balances[exp.payer] -= exp.amount;
+                    splitDetailHTML = `<span class="mini-badge bg-green-100 text-green-700">Settled by ${exp.payer}</span>`;
+                } else {
+                    total += exp.amount; 
+                    const split = Math.round(exp.amount / (exp.involved?.length || 1));
+                    
+                    exp.involved?.forEach(name => { 
+                        if (balances.hasOwnProperty(name)) balances[name] += split; 
+                    });
+
+                    splitDetailHTML = exp.involved ? exp.involved.map(n => 
+                        `<span class="mini-badge bg-white shadow-sm border border-gray-100">${n}: <span class="text-indigo-600">₹${split}</span></span>`
+                    ).join('') : '';
                 }
+
                 feed.innerHTML += `<div class="p-6 ${exp.type === 'settlement' ? 'bg-green-50' : 'bg-gray-50'} rounded-silk flex flex-col mb-3">
-                    <div class="flex justify-between items-center mb-2"><div><h4 class="font-extrabold text-gray-800">${exp.title}</h4></div><p class="text-xl font-black ${exp.type === 'settlement' ? 'text-green-600' : 'text-gray-900'}">${exp.type === 'settlement' ? '✓' : ''}₹${exp.amount}</p></div>
-                    <div class="flex flex-wrap gap-1">${exp.involved ? exp.involved.map(n => `<span class="mini-badge bg-white">${n}</span>`).join('') : `<span class="mini-badge bg-green-200">${exp.payer}</span>`}</div>
+                    <div class="flex justify-between items-center mb-2">
+                        <div><h4 class="font-extrabold text-gray-800">${exp.title}</h4></div>
+                        <p class="text-xl font-black ${exp.type === 'settlement' ? 'text-green-600' : 'text-gray-900'}">
+                            ${exp.type === 'settlement' ? '✓ ' : ''}₹${exp.amount}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-1">${splitDetailHTML}</div>
                 </div>`;
             });
+
             document.getElementById('grand-total').innerText = "₹" + total.toLocaleString();
-            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `<div class="silk-card p-6 theme-${i % 4}"><p class="text-[10px] font-black uppercase opacity-70">${m.name}</p><p class="text-2xl font-black">₹${balances[m.name] || 0}</p></div>`).join('');
+            document.getElementById('stats-grid').innerHTML = groupMembers.map((m, i) => `
+                <div class="silk-card p-6 theme-${i % 4} member-stat-card" onclick="openMemberProfile('${m.name}', '${m.email}', ${i % 4})">
+                    <p class="text-[10px] font-black uppercase opacity-70">${m.name}</p>
+                    <p class="text-2xl font-black">₹${balances[m.name] || 0}</p>
+                </div>`).join('');
             renderSettlementList(balances);
         }
+
+        window.openMemberProfile = (name, email, themeIdx) => {
+            const overlay = document.getElementById('member-modal-overlay');
+            const imgEl = document.getElementById('modal-member-img');
+            const iconEl = document.getElementById('modal-member-icon');
+            const contribList = document.getElementById('member-contribution-list');
+            
+            overlay.style.display = 'flex';
+            document.getElementById('modal-member-name').innerText = name;
+            document.getElementById('modal-member-email').innerText = email;
+            
+            contribList.style.display = 'none';
+            document.getElementById('contribution-toggle-text').innerText = "Show All Contributions";
+
+            let balance = 0;
+            let contributions = [];
+            
+            Object.values(currentGroupExpenses).forEach(exp => {
+                if (exp.type === 'settlement' && exp.payer === name) {
+                    balance -= exp.amount;
+                    contributions.push({ title: "Settled Balance", amount: -exp.amount, date: exp.date || 'Today' });
+                } else if (exp.involved && exp.involved.includes(name)) {
+                    const split = Math.round(exp.amount / exp.involved.length);
+                    balance += split;
+                    contributions.push({ title: exp.title, amount: split, date: exp.date || 'Today' });
+                }
+            });
+
+            document.getElementById('modal-member-balance').innerText = `₹${balance}`;
+            
+            contribList.innerHTML = contributions.length ? contributions.reverse().map(c => `
+                <div class="flex justify-between items-center p-3 bg-white border border-gray-100 rounded-xl">
+                    <div class="text-left">
+                        <p class="text-[11px] font-black text-gray-800">${c.title}</p>
+                        <p class="text-[9px] font-bold text-gray-400">${c.date}</p>
+                    </div>
+                    <p class="font-black text-xs ${c.amount < 0 ? 'text-green-500' : 'text-red-500'}">${c.amount < 0 ? '-' : '+'}₹${Math.abs(c.amount)}</p>
+                </div>
+            `).join('') : '<p class="text-[10px] font-bold text-gray-400 py-4">No activity yet</p>';
+
+            if (auth.currentUser.email.toLowerCase() === email.toLowerCase()) {
+                imgEl.src = auth.currentUser.photoURL;
+                imgEl.classList.remove('hidden');
+                iconEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                iconEl.classList.remove('hidden');
+            }
+        };
+
+        window.toggleMemberContribution = () => {
+            const list = document.getElementById('member-contribution-list');
+            const text = document.getElementById('contribution-toggle-text');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                text.innerText = "Hide Details";
+            } else {
+                list.style.display = 'none';
+                text.innerText = "Show All Contributions";
+            }
+        };
 
         function renderSettlementList(balances) {
             const list = document.getElementById('settlement-list');
@@ -396,7 +527,6 @@
         window.signOutNow = () => auth.signOut().then(() => location.reload());
         document.getElementById('google-login-btn').onclick = () => auth.signInWithPopup(provider);
         
-        // --- FIXED COPY ID FUNCTION ---
         window.copyGroupId = () => { 
             if (currentGroupId) {
                 navigator.clipboard.writeText(currentGroupId).then(() => {
