@@ -307,7 +307,6 @@
                 currentGroupExpenses = data.expenses || {};
                 isAdmin = (data.admin === auth.currentUser.email.toLowerCase());
                 
-                // Update profile account type based on group role
                 document.getElementById('profile-account-type').innerText = isAdmin ? "Group Admin" : "Group Member";
                 
                 document.getElementById('admin-tools-wrapper').classList.toggle('hidden', !isAdmin);
@@ -330,9 +329,21 @@
                         </div>
                         <p class="text-xs font-bold opacity-60 uppercase">${m.email}</p>
                     </div>
-                    ${isAdmin && !isMemberAdmin ? `<button onclick="event.stopPropagation(); adminRemoveMember(${i})" class="text-red-400 p-2"><i class="fa-solid fa-user-minus"></i></button>` : ''}
+                    <div class="flex gap-2">
+                        ${isAdmin && !isMemberAdmin ? `
+                            <button onclick="event.stopPropagation(); transferAdmin('${m.email}')" class="text-indigo-400 p-2 hover:text-indigo-600"><i class="fa-solid fa-crown"></i></button>
+                            <button onclick="event.stopPropagation(); adminRemoveMember(${i})" class="text-red-400 p-2"><i class="fa-solid fa-user-minus"></i></button>
+                        ` : ''}
+                    </div>
                 </div>`;
             }).join('');
+        }
+
+        async function transferAdmin(newAdminEmail) {
+            if(confirm("Transfer ownership to this member? You will lose admin privileges.")) {
+                await db.ref(`groups/${currentGroupId}/admin`).set(newAdminEmail.toLowerCase());
+                showToast("Admin privileges transferred!");
+            }
         }
 
         function renderUI(expenses) {
@@ -491,7 +502,7 @@
                 if(!snap.exists()) list.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">No Requests</p>';
                 snap.forEach(ticket => {
                     const t = ticket.val();
-                    list.innerHTML += `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center border border-gray-100"><div><p class="font-black text-xs">${t.name}</p></div><div class="flex gap-2"><button onclick="resolveTicket('${ticket.key}', true, '${t.name}', '${t.email}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[8px] font-black uppercase">Allow</button></div></div>`;
+                    list.innerHTML += `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center border border-gray-100"><div><p class="font-black text-xs">${t.name}</p></div><div class="flex gap-2"><button onclick="resolveTicket('${ticket.key}', true, '${t.name}', '${t.email}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[8px] font-black uppercase">Allow</button><button onclick="resolveTicket('${ticket.key}', false)" class="bg-red-500 text-white px-3 py-2 rounded-xl text-[8px] font-black uppercase">Deny</button></div></div>`;
                 });
             });
         }
@@ -500,6 +511,9 @@
             if(allow) {
                 groupMembers.push({ name, email });
                 await db.ref(`groups/${currentGroupId}/members`).set(groupMembers);
+                showToast("Request Allowed");
+            } else {
+                showToast("Request Denied");
             }
             await db.ref(`groups/${currentGroupId}/tickets/${tid}`).remove();
         }
