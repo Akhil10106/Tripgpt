@@ -1,0 +1,17 @@
+{
+  "name": "TripSplit Pro",
+  "short_name": "TripSplit",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#8b5cf6",
+  "description": "Premium group expense splitting app.",
+  "icons": [
+    {
+      "src": "icon~6.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
