@@ -6,286 +6,434 @@
     <title>TripSplit Pro | Premium Expense Cloud</title>
     
     <link rel="manifest" href="manifest.json">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <style>
-        :root { 
-            --primary: #6366f1; 
+        :root {
+            --primary: #6366f1;
             --primary-dark: #4f46e5;
-            --bg: #f8fafc; 
-            --card: #ffffff;
-        }
-        
-        body { 
-            background: var(--bg); 
-            color: #1e293b; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            min-height: 100vh; 
-            letter-spacing: -0.01em;
+            --accent: #f43f5e;
+            --bg: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.7);
         }
 
-        /* Glassmorphism & Silk UI */
-        .silk-card { 
-            background: var(--card); 
-            border: 1px solid rgba(255, 255, 255, 0.7); 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); 
-            border-radius: 2rem; 
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn-primary {
+        /* --- Sophisticated UI Components --- */
+        .silk-card {
+            background: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            border-radius: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .silk-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 100;
+        }
+
+        /* --- Transitions --- */
+        .view-pane {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .view-pane.active-view {
+            display: block;
+            animation: slideUp 0.6s forwards cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Buttons --- */
+        .btn-premium {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            border-radius: 1.25rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); }
-
-        /* Smooth View Transitions */
-        .view-pane { display: none; opacity: 0; transform: translateY(10px); }
-        .view-pane.active-view { 
-            display: block; 
-            animation: paneIn 0.5s forwards ease-out; 
+        .btn-premium:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
         }
 
-        @keyframes paneIn { 
-            to { opacity: 1; transform: translateY(0); } 
+        .btn-premium:active {
+            transform: scale(0.98);
         }
 
-        /* Admin Specific Styling */
-        .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .status-badge { padding: 4px 12px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        /* --- Navigation --- */
+        .nav-item {
+            color: #94a3b8;
+            transition: all 0.3s;
+        }
 
-        /* Custom Scrollbar */
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        /* --- Custom Scrollbar --- */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
-        .nav-fixed {
-            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-            z-index: 100; width: calc(100% - 2rem); max-width: 500px;
+        /* --- Admin Specific --- */
+        .admin-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .admin-glow::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .badge-pro {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-bottom-color: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Styling */
+        .toast {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            animation: toastIn 0.4s ease forwards;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[300] space-y-2 pointer-events-none"></div>
+    <div id="toast-container"></div>
 
-    <div id="auth-screen" class="fixed inset-0 z-[200] bg-white flex items-center justify-center p-6">
-        <div id="login-container" class="text-center w-full max-w-sm space-y-8">
-            <div>
-                <h1 class="text-5xl font-extrabold tracking-tighter text-gray-900">TripSplit <span class="text-indigo-600">Pro</span></h1>
-                <p class="text-gray-400 font-medium mt-2">The Ultimate Expense Cloud</p>
+    <div id="auth-screen" class="fixed inset-0 z-[500] bg-white flex items-center justify-center p-6">
+        <div id="login-container" class="w-full max-w-sm text-center">
+            <div class="mb-12">
+                <div class="w-24 h-24 bg-indigo-600 rounded-[2.5rem] mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-indigo-200">
+                    <i class="fa-solid fa-cloud-bolt text-white text-4xl"></i>
+                </div>
+                <h1 class="text-4xl font-extrabold tracking-tighter mb-2">TripSplit <span class="text-indigo-600">Pro</span></h1>
+                <p class="text-slate-400 font-medium">The Elite Cloud for Shared Expenses</p>
             </div>
-            <button id="google-login-btn" class="w-full silk-card p-5 flex items-center justify-center gap-4 hover:bg-gray-50 transition-all active:scale-95">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24">
-                <span class="font-bold text-lg">Sign in with Google</span>
+            
+            <button id="google-login-btn" class="w-full silk-card py-5 flex items-center justify-center gap-4 hover:bg-slate-50 border-none transition-all active:scale-95">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6">
+                <span class="font-bold text-lg">Continue with Google</span>
             </button>
         </div>
 
-        <div id="group-discovery" class="hidden w-full max-w-lg p-6">
-            <div class="flex justify-between items-end mb-8">
+        <div id="group-discovery" class="hidden w-full max-w-lg p-4">
+            <div class="flex justify-between items-end mb-8 px-2">
                 <div>
-                    <h2 class="text-3xl font-extrabold">Your Circles</h2>
-                    <p class="text-sm text-gray-500 font-medium">Select a workspace to begin</p>
+                    <h2 class="text-3xl font-extrabold">My Circles</h2>
+                    <p class="text-slate-400 font-medium">Choose a workspace to enter</p>
                 </div>
-                <button onclick="signOutNow()" class="text-red-500 font-bold text-xs bg-red-50 px-4 py-2 rounded-xl">SIGN OUT</button>
+                <button onclick="signOut()" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-black">LOGOUT</button>
             </div>
-            <div id="my-groups-list" class="grid gap-4 mb-8 max-h-[50vh] overflow-y-auto pr-2"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="showJoinManual()" class="p-4 silk-card text-gray-600 font-bold border-dashed border-2">Join Circle</button>
-                <button onclick="showCreationPopup()" class="p-4 btn-primary text-white rounded-[2rem] font-bold shadow-lg">New Circle</button>
+            <div id="discovery-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                </div>
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="openModal('modal-join')" class="p-4 silk-card text-slate-500 font-bold border-dashed border-2 hover:border-indigo-300">Join Circle</button>
+                <button onclick="openModal('modal-create')" class="btn-premium p-4 rounded-[2rem] shadow-xl">New Circle</button>
             </div>
         </div>
     </div>
 
-    <div id="app-content" class="hidden pb-32 pt-10 px-4 md:px-10 max-w-7xl mx-auto">
+    <div id="app-content" class="hidden min-h-screen">
         
-        <header class="flex items-center justify-between mb-12">
+        <header class="glass-header fixed top-0 left-0 right-0 h-20 flex items-center px-4 md:px-10 justify-between">
             <div class="flex items-center gap-4">
-                <div class="relative group cursor-pointer" onclick="showView('profile-page')">
-                    <img id="user-photo" src="" class="w-14 h-14 rounded-[1.5rem] border-2 border-white shadow-lg group-hover:scale-105 transition-transform">
-                    <div id="user-sub-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] hidden"><i class="fa-solid fa-crown"></i></div>
+                <div class="relative group cursor-pointer" onclick="showView('view-profile')">
+                    <img id="header-avatar" src="" class="w-11 h-11 rounded-2xl shadow-lg border-2 border-white group-hover:scale-110 transition-transform">
+                    <div id="sub-crown" class="absolute -top-1 -right-1 bg-amber-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] hidden"><i class="fa-solid fa-crown"></i></div>
                 </div>
                 <div>
-                    <h3 id="display-group-name" class="text-xl font-extrabold text-gray-900 leading-none">...</h3>
-                    <button onclick="copyGroupId()" class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Copy ID: <span id="current-id-tag" class="opacity-60"></span></button>
+                    <h3 id="current-group-name" class="font-extrabold text-slate-900 leading-none">Loading...</h3>
+                    <p onclick="copyID()" class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1 cursor-pointer hover:text-indigo-700 transition-colors">
+                        ID: <span id="current-group-id-display">#0000</span> <i class="fa-solid fa-copy ml-1"></i>
+                    </p>
                 </div>
             </div>
 
-            <nav class="hidden md:flex bg-white/50 backdrop-blur-md p-1.5 rounded-[1.8rem] border border-white shadow-sm">
-                <button onclick="showView('main-dashboard')" class="px-6 py-2.5 rounded-[1.4rem] text-sm font-bold text-gray-500 hover:text-indigo-600 transition-all">Home</button>
-                <button onclick="showView('plans-page')" class="px-6 py-2.5 rounded-[1.4rem] text-sm font-bold text-gray-500 hover:text-indigo-600">Pro Plans</button>
-                <button id="admin-nav-btn" onclick="showView('admin-center')" class="px-6 py-2.5 rounded-[1.4rem] text-sm font-bold text-indigo-600 hidden"><i class="fa-solid fa-shield-halved mr-2"></i>Admin</button>
-                <button onclick="showView('settings-page')" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-900 text-white ml-2"><i class="fa-solid fa-gear text-xs"></i></button>
+            <nav class="hidden lg:flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl">
+                <button onclick="showView('view-dashboard')" class="nav-btn-desktop px-5 py-2 rounded-xl text-sm font-bold text-slate-500 transition-all active-nav">Home</button>
+                <button onclick="showView('view-plans')" class="nav-btn-desktop px-5 py-2 rounded-xl text-sm font-bold text-slate-500 transition-all">Subscriptions</button>
+                <button id="admin-nav-desktop" onclick="showView('view-admin')" class="nav-btn-desktop px-5 py-2 rounded-xl text-sm font-bold text-indigo-600 hidden"><i class="fa-solid fa-shield-halved mr-1"></i> Admin</button>
+                <button onclick="showView('view-settings')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm ml-2 text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-sliders"></i></button>
             </nav>
         </header>
 
-        <main id="main-dashboard" class="view-pane active-view">
-            <div id="global-announcement" class="hidden mb-8 p-4 bg-indigo-600 text-white rounded-3xl flex items-center gap-4 shadow-xl animate-pulse">
-                <i class="fa-solid fa-bullhorn text-xl"></i>
-                <p id="announcement-text" class="text-sm font-bold"></p>
+        <main class="pt-28 pb-32 px-4 md:px-10 max-w-7xl mx-auto">
+            
+            <div id="view-dashboard" class="view-pane active-view">
+                <div id="global-announcement" class="hidden silk-card bg-indigo-600 border-none p-4 mb-8 flex items-center gap-4 text-white shadow-indigo-200">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><i class="fa-solid fa-bullhorn"></i></div>
+                    <p id="announcement-msg" class="text-sm font-bold"></p>
+                </div>
+
+                <div id="dashboard-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                    </div>
+
+                <div class="grid lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-4">
+                        <div class="silk-card p-8 sticky top-28">
+                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">New Transaction</h4>
+                            <div class="space-y-5">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase ml-1">What for?</label>
+                                    <input type="text" id="log-title" placeholder="Dinner, Taxi, Fuel..." class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-none outline-none focus:ring-2 ring-indigo-100 transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase ml-1">How much?</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-lg">₹</span>
+                                        <input type="number" id="log-amount" placeholder="0.00" class="w-full bg-slate-50 p-4 pl-10 rounded-2xl text-2xl font-black border-none outline-none focus:ring-2 ring-indigo-100">
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Split with</label>
+                                    <div id="split-selectors" class="flex flex-wrap gap-2">
+                                        </div>
+                                </div>
+                                <button onclick="publishTransaction()" class="w-full btn-premium py-5 mt-4 text-sm font-black uppercase tracking-tighter">Publish to Cloud</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8">
+                        <div class="flex justify-between items-end mb-6 px-2">
+                            <h3 class="text-2xl font-black">Timeline</h3>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Grand Total Spend</p>
+                                <p id="grand-total" class="text-lg font-black text-indigo-600">₹0</p>
+                            </div>
+                        </div>
+                        <div id="timeline-feed" class="space-y-4">
+                            </div>
+                    </div>
+                </div>
             </div>
 
-            <div id="stats-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"></div>
+            <div id="view-admin" class="view-pane">
+                <div class="mb-12 text-center">
+                    <h2 class="text-4xl font-black tracking-tighter mb-2">Command Center</h2>
+                    <p class="text-indigo-600 font-bold uppercase text-[10px] tracking-[0.3em]">Authorized Personnel Only</p>
+                </div>
 
-            <div class="grid lg:grid-cols-12 gap-10">
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="silk-card p-8 sticky top-10">
-                        <h4 class="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Log Transaction</h4>
-                        <div class="space-y-4">
-                            <input type="text" id="bill-title" placeholder="Description" class="w-full bg-gray-50 p-4 rounded-2xl font-bold border-none focus:ring-2 ring-indigo-100 transition-all">
-                            <div class="relative">
-                                <span class="absolute left-4 top-4 font-black text-gray-400">₹</span>
-                                <input type="number" id="bill-amount" placeholder="0.00" class="w-full bg-gray-50 p-4 pl-10 rounded-2xl text-2xl font-black border-none focus:ring-2 ring-indigo-100">
-                            </div>
-                            <div class="pt-2">
-                                <p class="text-[10px] font-black text-gray-400 uppercase mb-3 px-1">Split Between</p>
-                                <div id="split-selectors" class="flex flex-wrap gap-2"></div>
-                            </div>
-                            <button onclick="logExpense()" class="w-full btn-primary py-5 rounded-[1.5rem] text-white font-black uppercase tracking-widest mt-4">Publish To Cloud</button>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="silk-card p-8 bg-slate-900 text-white admin-glow">
+                        <p class="text-[10px] font-bold opacity-50 uppercase mb-1">Total Communities</p>
+                        <h4 id="admin-stat-groups" class="text-4xl font-black">0</h4>
+                    </div>
+                    <div class="silk-card p-8 bg-indigo-600 text-white admin-glow">
+                        <p class="text-[10px] font-bold opacity-60 uppercase mb-1">Total Platform Users</p>
+                        <h4 id="admin-stat-users" class="text-4xl font-black">0</h4>
+                    </div>
+                    <div class="silk-card p-8 bg-white text-slate-900 border-2 border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Largest Community</p>
+                        <h4 id="admin-stat-top-group" class="text-xl font-black truncate">...</h4>
                     </div>
                 </div>
 
-                <div class="lg:col-span-8">
-                    <div class="flex justify-between items-end mb-6 px-2">
-                        <h4 class="text-2xl font-black">History</h4>
-                        <p class="text-sm font-bold text-gray-400">Total Group Spend: <span id="grand-total" class="text-indigo-600">₹0</span></p>
+                <div class="grid lg:grid-cols-12 gap-10">
+                    <div class="lg:col-span-7">
+                        <div class="silk-card p-8">
+                            <h3 class="text-xl font-black mb-6">Subscription Requests <span id="admin-sub-count" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md ml-2">0</span></h3>
+                            <div id="admin-sub-requests" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                                <div class="text-center py-20 text-slate-300 font-bold italic">No pending verifications</div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="activity-feed" class="space-y-4"></div>
+
+                    <div class="lg:col-span-5">
+                        <div class="silk-card p-8 bg-slate-50 border-none">
+                            <h3 class="text-xl font-black mb-6">Global Broadcast</h3>
+                            <div class="space-y-4">
+                                <textarea id="admin-broadcast-msg" placeholder="Message to all users..." class="w-full bg-white p-5 rounded-2xl h-40 border-none outline-none font-medium text-sm focus:ring-2 ring-indigo-200 shadow-inner"></textarea>
+                                <div class="flex gap-2">
+                                    <button onclick="postBroadcast()" class="flex-1 btn-premium py-4">Push Global</button>
+                                    <button onclick="clearBroadcast()" class="px-6 bg-white text-red-500 font-bold rounded-2xl border border-red-100">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-plans" class="view-pane">
+                <div class="max-w-4xl mx-auto text-center mb-16">
+                    <h2 class="text-4xl font-black tracking-tighter mb-4">Elite Cloud Plans</h2>
+                    <p class="text-slate-500 font-medium">Power up your trips with unlimited participants and real-time cloud sync.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    <div class="silk-card p-8 flex flex-col items-center text-center">
+                        <h4 class="text-xl font-black text-slate-900 mb-2">Basic</h4>
+                        <p class="text-4xl font-black text-slate-900 mb-6">₹50<span class="text-xs text-slate-400 font-bold">/month</span></p>
+                        <ul class="text-sm font-bold text-slate-500 space-y-3 mb-10 w-full text-left">
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> 2 Workspaces</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> 5 Members per Circle</li>
+                            <li><i class="fa-solid fa-xmark text-slate-300 mr-2"></i> Global Analytics</li>
+                        </ul>
+                        <button onclick="requestSub('Basic', 50)" class="w-full py-3 bg-slate-100 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all">Select Plan</button>
+                    </div>
+
+                    <div class="silk-card p-8 border-2 border-indigo-600 flex flex-col items-center text-center relative overflow-hidden scale-105 shadow-2xl">
+                        <div class="absolute top-4 -right-8 bg-indigo-600 text-white px-10 py-1 rotate-45 text-[8px] font-black uppercase tracking-widest">MOST POPULAR</div>
+                        <h4 class="text-xl font-black text-slate-900 mb-2">Standard</h4>
+                        <p class="text-4xl font-black text-slate-900 mb-6">₹100<span class="text-xs text-slate-400 font-bold">/month</span></p>
+                        <ul class="text-sm font-bold text-slate-500 space-y-3 mb-10 w-full text-left">
+                            <li><i class="fa-solid fa-check text-indigo-600 mr-2"></i> 10 Workspaces</li>
+                            <li><i class="fa-solid fa-check text-indigo-600 mr-2"></i> 20 Members per Circle</li>
+                            <li><i class="fa-solid fa-check text-indigo-600 mr-2"></i> Priority Verification</li>
+                        </ul>
+                        <button onclick="requestSub('Standard', 100)" class="w-full btn-premium py-4 shadow-indigo-200">Get Standard</button>
+                    </div>
+
+                    <div class="silk-card p-8 bg-slate-900 text-white flex flex-col items-center text-center">
+                        <h4 class="text-xl font-black mb-2">Premium</h4>
+                        <p class="text-4xl font-black mb-6">₹250<span class="text-xs opacity-50 font-bold">/month</span></p>
+                        <ul class="text-sm font-bold opacity-60 space-y-3 mb-10 w-full text-left">
+                            <li><i class="fa-solid fa-bolt text-amber-400 mr-2"></i> Unlimited Everything</li>
+                            <li><i class="fa-solid fa-bolt text-amber-400 mr-2"></i> Real-time Team Chat</li>
+                            <li><i class="fa-solid fa-bolt text-amber-400 mr-2"></i> 24/7 VIP Support</li>
+                        </ul>
+                        <button onclick="requestSub('Premium', 250)" class="w-full py-3 bg-white text-slate-900 rounded-xl font-bold">Go Premium</button>
+                    </div>
+                </div>
+
+                <div id="payment-gateway" class="hidden max-w-sm mx-auto animate-pulse">
+                    <div class="silk-card p-10 bg-indigo-50 border-2 border-indigo-100 text-center">
+                        <p class="text-[10px] font-black text-indigo-600 uppercase mb-4 tracking-widest">Manual UPI Verification</p>
+                        <img id="qr-display" src="" class="w-48 h-48 mx-auto rounded-3xl border-4 border-white mb-6 shadow-xl">
+                        <div class="mb-6">
+                            <p class="text-sm font-bold text-slate-500">Amount to Pay: <span id="pay-amount-label" class="text-slate-900 font-black">₹0</span></p>
+                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase italic">Locked to: Akhil Goel</p>
+                        </div>
+                        <input type="text" id="pay-tx-id" placeholder="Enter Transaction ID" class="w-full p-4 rounded-xl font-bold text-center mb-4 uppercase text-sm border-none outline-none shadow-inner">
+                        <button onclick="finalizeSubRequest()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm">Submit for Verification</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-settings" class="view-pane max-w-2xl mx-auto">
+                <h2 class="text-3xl font-black mb-8 px-2">Circle Settings</h2>
+                <div class="space-y-4">
+                    <div class="silk-card p-6 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Circle Name</p>
+                            <h4 id="settings-group-name" class="text-xl font-extrabold">...</h4>
+                        </div>
+                        <button class="w-10 h-10 bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+
+                    <div class="silk-card p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h5 class="font-black">Members Control</h5>
+                            <span id="member-count-badge" class="bg-indigo-50 text-indigo-600 text-[10px] px-3 py-1 rounded-full font-black">...</span>
+                        </div>
+                        <div id="settings-member-list" class="space-y-3">
+                            </div>
+
+                        <div id="admin-only-tools" class="hidden mt-8 pt-8 border-t border-slate-50">
+                            <p class="text-[10px] font-black text-indigo-500 uppercase mb-4">Admin Dashboard Tools</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                                <input type="text" id="add-mem-name" placeholder="Full Name" class="bg-slate-50 p-4 rounded-xl text-sm font-bold border-none outline-none">
+                                <input type="email" id="add-mem-email" placeholder="Email Address" class="bg-slate-50 p-4 rounded-xl text-sm font-bold border-none outline-none">
+                            </div>
+                            <button onclick="adminManualAdd()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm hover:shadow-lg transition-all">Add Participant Manually</button>
+                        </div>
+                    </div>
+
+                    <div class="silk-card p-8 bg-red-50 border-red-100 mt-10 text-center">
+                        <p class="text-xs font-black text-red-500 uppercase mb-4">Danger Zone</p>
+                        <button onclick="confirmDeleteGroup()" class="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-xl shadow-red-200">Dissolve This Circle</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-profile" class="view-pane max-w-lg mx-auto">
+                <div class="silk-card p-10 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
+                    <img id="profile-img-large" src="" class="w-28 h-28 rounded-[2.5rem] mx-auto mb-6 shadow-2xl border-4 border-white">
+                    <h2 id="profile-name" class="text-3xl font-black text-slate-900">...</h2>
+                    <p id="profile-email" class="text-slate-400 font-bold mb-4">...</p>
+                    <div id="profile-status-badge" class="inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-10">Free Starter</div>
+                    
+                    <div class="grid gap-3">
+                        <button onclick="showView('view-plans')" class="w-full py-4 bg-indigo-50 text-indigo-600 rounded-2xl font-bold hover:bg-indigo-100">Manage Subscriptions</button>
+                        <button onclick="signOut()" class="w-full py-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl">Sign Out Session</button>
+                    </div>
                 </div>
             </div>
         </main>
 
-        <div id="admin-center" class="view-pane">
-            <div class="mb-10 text-center">
-                <h2 class="text-4xl font-black tracking-tighter">Command Center</h2>
-                <p class="text-indigo-600 font-bold uppercase text-[10px] tracking-[0.3em]">System Administrator</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="silk-card p-8 text-center bg-white">
-                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Total Communities</p>
-                    <p id="admin-total-groups" class="text-4xl font-black text-gray-900">0</p>
-                </div>
-                <div class="silk-card p-8 text-center bg-white">
-                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Total Users</p>
-                    <p id="admin-total-users" class="text-4xl font-black text-indigo-600">0</p>
-                </div>
-                <div class="silk-card p-8 text-center bg-white">
-                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Hottest Circle</p>
-                    <p id="admin-top-group" class="text-lg font-black text-gray-900 truncate px-2">...</p>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-2 gap-10">
-                <div class="silk-card p-8">
-                    <h3 class="text-xl font-black mb-6 flex items-center gap-3">
-                        Pending Approvals <span id="sub-req-count" class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-lg">0</span>
-                    </h3>
-                    <div id="admin-sub-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"></div>
-                </div>
-
-                <div class="silk-card p-8">
-                    <h3 class="text-xl font-black mb-6">Global Broadcast</h3>
-                    <div class="space-y-4">
-                        <textarea id="announcement-input" placeholder="Enter message for all users..." class="w-full bg-gray-50 p-4 rounded-2xl font-medium border-none h-32 focus:ring-2 ring-indigo-100"></textarea>
-                        <button onclick="postAnnouncement()" class="w-full admin-gradient text-white py-4 rounded-[1.2rem] font-bold">Broadcast to Everyone</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="plans-page" class="view-pane">
-            <div class="max-w-4xl mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-black tracking-tighter mb-4">Upgrade Your Experience</h2>
-                    <p class="text-gray-500 font-medium">Power up your circles with premium cloud features</p>
-                </div>
-                <div id="pricing-cards" class="grid md:grid-cols-3 gap-8">
-                    <div class="silk-card p-8 flex flex-col items-center text-center hover:shadow-2xl transition-all border-2 border-indigo-600 relative overflow-hidden">
-                        <div class="absolute top-4 -right-8 bg-indigo-600 text-white px-10 py-1 rotate-45 text-[8px] font-black uppercase">POPULAR</div>
-                        <h4 class="text-2xl font-black mb-2">Standard</h4>
-                        <p class="text-4xl font-black mb-6">₹100 <span class="text-sm text-gray-400 font-bold">/month</span></p>
-                        <ul class="text-sm font-bold text-gray-500 space-y-3 mb-10 text-left w-full">
-                            <li><i class="fa-solid fa-circle-check text-indigo-600 mr-2"></i> Up to 10 Groups</li>
-                            <li><i class="fa-solid fa-circle-check text-indigo-600 mr-2"></i> 20 Members per Circle</li>
-                            <li><i class="fa-solid fa-circle-check text-indigo-600 mr-2"></i> Real-time Push Alerts</li>
-                        </ul>
-                        <button onclick="requestUpgrade('Standard', 100)" class="w-full btn-primary text-white py-4 rounded-2xl font-black uppercase">Get Standard</button>
-                    </div>
-                    </div>
-                
-                <div id="payment-box" class="hidden mt-12 max-w-sm mx-auto silk-card p-8 bg-indigo-50 border-indigo-200">
-                    <div class="text-center">
-                        <p class="text-[10px] font-black text-indigo-600 uppercase mb-4 tracking-widest">Manual Payment Gateway</p>
-                        <img id="payment-qr" src="" class="w-full aspect-square rounded-2xl mb-6 shadow-lg border-4 border-white">
-                        <p class="font-bold text-sm text-gray-500 mb-6">Pay <span id="pay-amt" class="text-gray-900">₹0</span> and enter Transaction ID below</p>
-                        <input type="text" id="tx-id" placeholder="Transaction ID" class="w-full p-4 rounded-xl font-bold text-center mb-4 uppercase">
-                        <button onclick="submitSubRequest()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold">Submit for Approval</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="profile-page" class="view-pane max-w-lg mx-auto">
-            <div class="silk-card p-10 text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
-                <img id="p-img" src="" class="w-24 h-24 rounded-[2rem] mx-auto mb-6 shadow-xl border-4 border-gray-50">
-                <h2 id="p-name" class="text-3xl font-black">...</h2>
-                <p id="p-email" class="text-gray-400 font-bold mb-4">...</p>
-                <div id="p-status" class="status-badge bg-gray-100 text-gray-500 inline-block">Free Starter</div>
-                
-                <div class="mt-10 space-y-3">
-                    <button onclick="showView('plans-page')" class="w-full py-4 bg-indigo-50 text-indigo-600 rounded-2xl font-bold hover:bg-indigo-100 transition-all">Manage Subscription</button>
-                    <button onclick="signOutNow()" class="w-full py-4 text-red-500 font-bold">Logout Session</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="settings-page" class="view-pane max-w-2xl mx-auto">
-            <h2 class="text-3xl font-black mb-8 px-4">Workspace Settings</h2>
-            <div class="space-y-4">
-                <div class="silk-card p-6 flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Circle Name</p>
-                        <h4 id="set-group-name" class="text-xl font-black">...</h4>
-                    </div>
-                    <button class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400"><i class="fa-solid fa-pen text-xs"></i></button>
-                </div>
-                
-                <div class="silk-card p-8">
-                    <h5 class="font-black mb-6">Participants</h5>
-                    <div id="member-settings-list" class="space-y-3"></div>
-                    <div id="admin-add-area" class="hidden mt-6 pt-6 border-t">
-                        <p class="text-[10px] font-black text-indigo-600 uppercase mb-4">Admin: Add Member Manually</p>
-                        <div class="flex gap-2">
-                            <input type="text" id="manual-mem-name" placeholder="Name" class="flex-1 bg-gray-50 p-4 rounded-xl text-sm font-bold">
-                            <input type="email" id="manual-mem-email" placeholder="Email" class="flex-1 bg-gray-50 p-4 rounded-xl text-sm font-bold">
-                            <button onclick="adminAddMember()" class="bg-gray-900 text-white px-6 rounded-xl font-bold"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-8 text-center silk-card bg-red-50 border-red-100 mt-10">
-                    <p class="text-xs font-bold text-red-500 mb-4 uppercase">Danger Zone</p>
-                    <button onclick="deleteCurrentCircle()" class="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-red-200">Delete This Circle Permanently</button>
-                </div>
-            </div>
-        </div>
+        <nav class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm glass-header rounded-[2.5rem] h-16 flex items-center justify-around px-6 shadow-2xl border border-white/50">
+            <button onclick="showView('view-dashboard')" class="nav-item active text-xl"><i class="fa-solid fa-house"></i></button>
+            <button onclick="showView('view-plans')" class="nav-item text-xl"><i class="fa-solid fa-crown"></i></button>
+            <button id="admin-nav-mobile" onclick="showView('view-admin')" class="nav-item text-indigo-600 text-xl hidden"><i class="fa-solid fa-shield-halved"></i></button>
+            <button onclick="showView('view-settings')" class="nav-item text-xl"><i class="fa-solid fa-users-gear"></i></button>
+            <button onclick="showView('view-profile')" class="w-10 h-10 rounded-2xl overflow-hidden border-2 border-transparent active:border-indigo-600">
+                <img id="mobile-nav-avatar" src="" class="w-full h-full object-cover">
+            </button>
+        </nav>
     </div>
 
-    <nav class="md:hidden nav-fixed bg-white/80 backdrop-blur-xl border border-white p-2 rounded-[2.5rem] flex items-center justify-around shadow-2xl">
-        <button onclick="showView('main-dashboard')" class="w-12 h-12 rounded-full flex items-center justify-center text-gray-400 active:text-indigo-600"><i class="fa-solid fa-house"></i></button>
-        <button onclick="showView('plans-page')" class="w-12 h-12 rounded-full flex items-center justify-center text-gray-400 active:text-indigo-600"><i class="fa-solid fa-crown"></i></button>
-        <button id="mobile-admin-btn" onclick="showView('admin-center')" class="w-12 h-12 rounded-full hidden items-center justify-center text-indigo-600"><i class="fa-solid fa-lock-open"></i></button>
-        <button onclick="showView('settings-page')" class="w-12 h-12 rounded-full flex items-center justify-center text-gray-400 active:text-indigo-600"><i class="fa-solid fa-users"></i></button>
-        <button onclick="showView('profile-page')" class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent active:border-indigo-600"><img id="mobile-p-img" src="" class="w-full h-full object-cover"></button>
-    </nav>
-
-    <div id="modal-overlay" class="fixed inset-0 z-[150] bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center p-6">
-        <div id="modal-content" class="silk-card bg-white w-full max-w-sm p-8 shadow-2xl scale-95 transition-transform"></div>
+    <div id="modal-overlay" class="fixed inset-0 z-[600] bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-6">
+        <div id="modal-content" class="w-full max-w-sm silk-card p-10 shadow-2xl scale-95 transition-transform duration-300">
+            </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -293,340 +441,490 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4", 
-            authDomain: "trip-ddc48.firebaseapp.com", 
-            databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com", 
-            projectId: "trip-ddc48", 
-            storageBucket: "trip-ddc48.firebasestorage.app" 
+        /* --- Initialization & Configuration --- */
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpLtdJ4lACW9pNn8fAUmooooqzh_5TIO4",
+            authDomain: "trip-ddc48.firebaseapp.com",
+            databaseURL: "https://trip-ddc48-default-rtdb.firebaseio.com",
+            projectId: "trip-ddc48",
+            storageBucket: "trip-ddc48.firebasestorage.app"
         };
+
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(), auth = firebase.auth();
+        const db = firebase.database();
+        const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
 
         const ADMIN_EMAIL = "akhilgoel985@gmail.com";
-        let currentGroupId = null, groupMembers = [], userPlan = 'Free';
+        let currentGroupId = null;
+        let groupData = null;
+        let currentUserPlan = 'Free';
+        let activeUpgrade = null;
 
-        /* 1. AUTH & ADMIN GATEKEEPER */
-        auth.onAuthStateChanged(u => {
-            if (u) {
-                const isSystemAdmin = u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-                document.getElementById('user-photo').src = u.photoURL;
-                document.getElementById('mobile-p-img').src = u.photoURL;
-                document.getElementById('p-img').src = u.photoURL;
-                document.getElementById('p-name').innerText = u.displayName;
-                document.getElementById('p-email').innerText = u.email;
+        /* --- Auth State Listener --- */
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const isAdmin = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
                 
-                if (isSystemAdmin) {
-                    document.getElementById('admin-nav-btn').classList.remove('hidden');
-                    document.getElementById('mobile-admin-btn').classList.remove('hidden');
-                    document.getElementById('mobile-admin-btn').style.display = 'flex';
-                    initAdminPanel();
+                // UI Setup for User
+                document.getElementById('header-avatar').src = user.photoURL;
+                document.getElementById('mobile-nav-avatar').src = user.photoURL;
+                document.getElementById('profile-img-large').src = user.photoURL;
+                document.getElementById('profile-name').innerText = user.displayName;
+                document.getElementById('profile-email').innerText = user.email;
+
+                // Admin Controls Toggle
+                if (isAdmin) {
+                    document.getElementById('admin-nav-desktop').classList.remove('hidden');
+                    document.getElementById('admin-nav-mobile').classList.remove('hidden');
+                    initAdminCenter();
                 }
 
-                loadUserSubscription(u.uid);
-                discoverUserGroups(u.email.toLowerCase());
-                listenForAnnouncements();
+                initSubscriptionListener(user.uid);
+                initGlobalBroadcasts();
+                loadUserCircles(user.email.toLowerCase());
+                
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('group-discovery').classList.remove('hidden');
             } else {
-                toggleLogin(true);
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
             }
         });
 
-        function loadUserSubscription(uid) {
+        /* --- Global Subscription System --- */
+        function initSubscriptionListener(uid) {
             db.ref(`active_subscriptions/${uid}`).on('value', snap => {
                 const sub = snap.val();
-                userPlan = sub ? sub.tier : 'Free';
-                document.getElementById('p-status').innerText = userPlan + " Plan";
-                document.getElementById('p-status').className = `status-badge ${sub ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'} inline-block`;
-                document.getElementById('user-sub-badge').classList.toggle('hidden', !sub);
+                currentUserPlan = sub ? sub.tier : 'Free';
+                const badge = document.getElementById('profile-status-badge');
+                
+                if (sub) {
+                    badge.innerText = `${sub.tier} Cloud Pro`;
+                    badge.className = "inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 bg-indigo-600 text-white";
+                    document.getElementById('sub-crown').classList.remove('hidden');
+                } else {
+                    badge.innerText = "Free Starter";
+                    badge.className = "inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 bg-slate-100 text-slate-500";
+                    document.getElementById('sub-crown').classList.add('hidden');
+                }
             });
         }
 
-        /* 2. CORE UI FUNCTIONS */
+        /* --- Admin Command Center Logic --- */
+        function initAdminCenter() {
+            // 1. Stats Aggregation
+            db.ref('groups').on('value', snap => {
+                const groups = snap.val() || {};
+                const keys = Object.keys(groups);
+                let totalUsers = 0;
+                let topGroup = { name: '...', count: 0 };
+
+                keys.forEach(k => {
+                    const mems = groups[k].members || [];
+                    totalUsers += mems.length;
+                    if (mems.length > topGroup.count) {
+                        topGroup = { name: groups[k].name, count: mems.length };
+                    }
+                });
+
+                document.getElementById('admin-stat-groups').innerText = keys.length;
+                document.getElementById('admin-stat-users').innerText = totalUsers;
+                document.getElementById('admin-stat-top-group').innerText = `${topGroup.name} (${topGroup.count})`;
+            });
+
+            // 2. Subscription Request Handler
+            db.ref('subscription_requests').on('value', snap => {
+                const list = document.getElementById('admin-sub-requests');
+                const badge = document.getElementById('admin-sub-count');
+                list.innerHTML = '';
+                
+                if (!snap.exists()) {
+                    badge.innerText = '0';
+                    list.innerHTML = '<div class="text-center py-20 text-slate-300 font-bold italic">No pending verifications</div>';
+                    return;
+                }
+
+                const requests = snap.val();
+                badge.innerText = Object.keys(requests).length;
+
+                Object.entries(requests).forEach(([key, r]) => {
+                    const card = `
+                        <div class="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h5 class="font-black text-sm">${r.userName}</h5>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">${r.userEmail}</p>
+                                </div>
+                                <span class="bg-indigo-600 text-white text-[9px] px-3 py-1 rounded-full font-black uppercase">${r.tier}</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl mb-4 text-[11px] font-mono text-indigo-600 break-all border border-indigo-50">
+                                TXID: ${r.txId}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="resolveSubscription('${key}', '${r.uid}', '${r.tier}', true, '${r.userName}')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase">Approve</button>
+                                <button onclick="resolveSubscription('${key}', '${r.uid}', '${r.tier}', false)" class="flex-1 bg-white text-red-500 py-3 rounded-xl text-[10px] font-black uppercase border border-red-50">Deny</button>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += card;
+                });
+            });
+        }
+
+        async function resolveSubscription(reqKey, uid, tier, approved, name) {
+            if (approved) {
+                // Set active subscription
+                await db.ref(`active_subscriptions/${uid}`).set({
+                    tier: tier,
+                    approvedAt: new Date().toISOString()
+                });
+
+                // Post a system message to a global announcements node
+                db.ref('announcements').push({
+                    text: `Elite Cloud Access Granted to ${name}! Welcome to the ${tier} circle.`,
+                    type: 'system',
+                    date: new Date().toLocaleTimeString()
+                });
+
+                showToast(`Subscription Approved for ${name}`);
+            } else {
+                showToast(`Request Denied`, 'error');
+            }
+            // Remove the request
+            db.ref(`subscription_requests/${reqKey}`).remove();
+        }
+
+        function postBroadcast() {
+            const msg = document.getElementById('admin-broadcast-msg').value.trim();
+            if (!msg) return showToast("Enter a message", "error");
+
+            db.ref('announcements').push({
+                text: msg,
+                by: 'System Admin',
+                date: new Date().toLocaleTimeString()
+            });
+
+            document.getElementById('admin-broadcast-msg').value = '';
+            showToast("Global Broadcast Pushed!");
+        }
+
+        function clearBroadcast() {
+            db.ref('announcements').remove();
+            showToast("All broadcasts cleared");
+        }
+
+        function initGlobalBroadcasts() {
+            db.ref('announcements').limitToLast(1).on('value', snap => {
+                const banner = document.getElementById('global-announcement');
+                const text = document.getElementById('announcement-msg');
+                
+                if (snap.exists()) {
+                    const data = Object.values(snap.val())[0];
+                    text.innerText = data.text;
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            });
+        }
+
+        /* --- Circle Management Logic --- */
+        function loadUserCircles(email) {
+            db.ref('groups').on('value', snap => {
+                const list = document.getElementById('discovery-list');
+                list.innerHTML = '';
+                const groups = snap.val() || {};
+
+                Object.entries(groups).forEach(([id, g]) => {
+                    const members = g.members || [];
+                    if (members.some(m => m.email.toLowerCase() === email)) {
+                        const card = `
+                            <div onclick="enterCircle('${id}', '${g.name}')" class="silk-card p-6 flex justify-between items-center cursor-pointer hover:border-indigo-100 group">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                                        <i class="fa-solid fa-users-viewfinder"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-slate-900 leading-none mb-1">${g.name}</h4>
+                                        <p class="text-[9px] font-black text-indigo-500 uppercase">${id}</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-slate-200 group-hover:text-indigo-200 group-hover:translate-x-1 transition-all"></i>
+                            </div>
+                        `;
+                        list.innerHTML += card;
+                    }
+                });
+            });
+        }
+
+        function enterCircle(id, name) {
+            currentGroupId = id;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            
+            // Sync with Circle
+            db.ref(`groups/${id}`).on('value', snap => {
+                groupData = snap.val();
+                if (!groupData) return;
+                
+                document.getElementById('current-group-name').innerText = groupData.name;
+                document.getElementById('current-group-id-display').innerText = id;
+                document.getElementById('settings-group-name').innerText = groupData.name;
+                
+                const isAdmin = groupData.admin.toLowerCase() === auth.currentUser.email.toLowerCase();
+                document.getElementById('admin-only-tools').classList.toggle('hidden', !isAdmin);
+
+                renderDashboard();
+                renderSettings();
+            });
+        }
+
+        /* --- Core Dashboard Rendering --- */
+        function renderDashboard() {
+            const expenses = groupData.expenses || {};
+            const members = groupData.members || [];
+            
+            let totalSpend = 0;
+            const balances = {};
+            members.forEach(m => balances[m.name] = 0);
+
+            // 1. Process Timeline
+            const feed = document.getElementById('timeline-feed');
+            feed.innerHTML = '';
+            
+            const sortedEntries = Object.entries(expenses).reverse();
+            sortedEntries.forEach(([key, e]) => {
+                const amt = parseFloat(e.amount);
+                if (e.type === 'expense') {
+                    totalSpend += amt;
+                    const split = amt / e.involved.length;
+                    e.involved.forEach(name => balances[name] += split);
+                } else if (e.type === 'settlement') {
+                    balances[e.payer] -= amt;
+                }
+
+                feed.innerHTML += `
+                    <div class="silk-card p-6 flex justify-between items-center bg-white border-none">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl ${e.type === 'expense' ? 'bg-slate-50 text-slate-400' : 'bg-green-50 text-green-500'} flex items-center justify-center">
+                                <i class="fa-solid ${e.type === 'expense' ? 'fa-receipt' : 'fa-hand-holding-dollar'}"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-black text-sm text-slate-900">${e.title}</h5>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">${e.date} • by ${e.by}</p>
+                            </div>
+                        </div>
+                        <p class="text-xl font-black ${e.type === 'settlement' ? 'text-green-600' : 'text-slate-900'}">₹${Math.round(amt)}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('grand-total').innerText = `₹${Math.round(totalSpend)}`;
+
+            // 2. Render Stats Grid
+            const statsGrid = document.getElementById('dashboard-stats');
+            statsGrid.innerHTML = members.map((m, i) => `
+                <div class="silk-card p-6 text-center">
+                    <p class="text-[9px] font-black text-slate-400 uppercase mb-1">${m.name}</p>
+                    <p class="text-2xl font-black text-slate-900">₹${Math.round(balances[m.name])}</p>
+                    <div class="w-full h-1 bg-slate-50 mt-4 rounded-full overflow-hidden">
+                        <div class="h-full bg-indigo-500" style="width: ${Math.min((balances[m.name]/totalSpend)*100 || 0, 100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 3. Render Splitting Selectors
+            document.getElementById('split-selectors').innerHTML = members.map(m => `
+                <button onclick="toggleChip(this)" data-name="${m.name}" class="chip-active px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white transition-all shadow-md shadow-indigo-100">${m.name}</button>
+            `).join('');
+        }
+
+        /* --- Settings & Group Control --- */
+        function renderSettings() {
+            const list = document.getElementById('settings-member-list');
+            const members = groupData.members || [];
+            document.getElementById('member-count-badge').innerText = `${members.length} Participants`;
+            
+            list.innerHTML = members.map((m, i) => `
+                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center font-black text-[10px] text-indigo-500">${m.name[0]}</div>
+                        <div>
+                            <p class="text-sm font-black text-slate-900 leading-none mb-1">${m.name}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">${m.email}</p>
+                        </div>
+                    </div>
+                    ${groupData.admin.toLowerCase() === m.email.toLowerCase() ? '<span class="text-[8px] font-black text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded">ADMIN</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        async function adminManualAdd() {
+            const name = document.getElementById('add-mem-name').value.trim();
+            const email = document.getElementById('add-mem-email').value.trim().toLowerCase();
+
+            if (!name || !email) return showToast("Enter all details", "error");
+            
+            const updatedMembers = [...groupData.members, { name: name.split(' ')[0], email: email }];
+            await db.ref(`groups/${currentGroupId}/members`).set(updatedMembers);
+            
+            document.getElementById('add-mem-name').value = '';
+            document.getElementById('add-mem-email').value = '';
+            showToast("Member Added Successfully!");
+        }
+
+        /* --- Transaction Handling --- */
+        async function publishTransaction() {
+            const title = document.getElementById('log-title').value.trim();
+            const amount = document.getElementById('log-amount').value.trim();
+            const involved = Array.from(document.querySelectorAll('.chip-active')).map(c => c.dataset.name);
+
+            if (!title || !amount || involved.length === 0) return showToast("Please fill all details", "error");
+
+            const newExp = {
+                title: title,
+                amount: amount,
+                involved: involved,
+                by: auth.currentUser.displayName.split(' ')[0],
+                date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+                type: 'expense'
+            };
+
+            await db.ref(`groups/${currentGroupId}/expenses`).push(newExp);
+            
+            document.getElementById('log-title').value = '';
+            document.getElementById('log-amount').value = '';
+            showToast("Transaction Recorded");
+        }
+
+        /* --- Subscription Upgrade Flow --- */
+        function requestSub(tier, price) {
+            activeUpgrade = { tier, price };
+            const upiUrl = `upi://pay?pa=akhilgoel985-2@okaxis&pn=Akhil%20Goel&am=${price}&cu=INR&tn=TripSplitPro_${tier}`;
+            document.getElementById('qr-display').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUrl)}`;
+            document.getElementById('pay-amount-label').innerText = `₹${price}`;
+            
+            document.getElementById('payment-gateway').classList.remove('hidden');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function finalizeSubRequest() {
+            const txId = document.getElementById('pay-tx-id').value.trim();
+            if (!txId) return showToast("Transaction ID required", "error");
+
+            const request = {
+                uid: auth.currentUser.uid,
+                userName: auth.currentUser.displayName,
+                userEmail: auth.currentUser.email,
+                tier: activeUpgrade.tier,
+                txId: txId,
+                status: 'pending',
+                requestedAt: new Date().toISOString()
+            };
+
+            await db.ref('subscription_requests').push(request);
+            
+            document.getElementById('payment-gateway').classList.add('hidden');
+            document.getElementById('pay-tx-id').value = '';
+            showToast("Request Sent! Verification usually takes 1 hour.");
+        }
+
+        /* --- UI Helpers --- */
         function showView(viewId) {
             document.querySelectorAll('.view-pane').forEach(v => v.classList.remove('active-view'));
-            const target = document.getElementById(viewId);
-            target.classList.add('active-view');
+            document.getElementById(viewId).classList.add('active-view');
+            
+            // Update Navigation UI
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.nav-btn-desktop').forEach(b => b.classList.remove('active-nav', 'bg-white', 'shadow-sm', 'text-indigo-600'));
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleChip(btn) {
+            btn.classList.toggle('chip-active');
+            btn.classList.toggle('bg-indigo-600');
+            btn.classList.toggle('text-white');
+            btn.classList.toggle('bg-slate-100');
+            btn.classList.toggle('text-slate-400');
+            btn.classList.toggle('shadow-md');
         }
 
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `p-4 silk-card text-xs font-black uppercase tracking-widest shadow-2xl flex items-center gap-3 animate-bounce-short pointer-events-auto bg-white`;
-            toast.innerHTML = `<div class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}"></div> ${msg}`;
+            toast.className = `toast silk-card px-6 py-4 flex items-center gap-3 border-none shadow-2xl bg-white`;
+            toast.innerHTML = `
+                <div class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}"></div>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-700">${msg}</span>
+            `;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 4000);
         }
 
-        /* 3. GROUP MANAGEMENT */
-        function discoverUserGroups(email) {
-            db.ref('groups').on('value', snap => {
-                const list = document.getElementById('my-groups-list');
-                list.innerHTML = '';
-                if (snap.exists()) {
-                    snap.forEach(gSnap => {
-                        const g = gSnap.val();
-                        if (g.members?.some(m => m.email.toLowerCase() === email)) {
-                            const card = document.createElement('div');
-                            card.className = "silk-card p-6 flex justify-between items-center cursor-pointer hover:border-indigo-200 transition-all";
-                            card.onclick = () => selectGroup(gSnap.key, g.name);
-                            card.innerHTML = `
-                                <div>
-                                    <h4 class="font-black text-gray-800">${g.name}</h4>
-                                    <p class="text-[10px] font-bold text-indigo-500 uppercase">${gSnap.key}</p>
-                                </div>
-                                <i class="fa-solid fa-chevron-right text-gray-300"></i>
-                            `;
-                            list.innerHTML += card.outerHTML;
-                        }
-                    });
-                }
-                toggleLogin(false);
-            });
-        }
+        function openModal(type) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
 
-        function selectGroup(id, name) {
-            currentGroupId = id;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('display-group-name').innerText = name;
-            document.getElementById('set-group-name').innerText = name;
-            document.getElementById('current-id-tag').innerText = id;
-            
-            db.ref(`groups/${id}`).on('value', snap => {
-                const data = snap.val();
-                if (!data) return;
-                groupMembers = data.members || [];
-                const isAdminOfGroup = data.admin.toLowerCase() === auth.currentUser.email.toLowerCase();
-                document.getElementById('admin-add-area').classList.toggle('hidden', !isAdminOfGroup);
-                renderDashboard(data.expenses || {});
-                renderSettingsMembers(data.admin);
-            });
-        }
-
-        /* 4. DASHBOARD & SPLITTING LOGIC */
-        function renderDashboard(expenses) {
-            // Stats & Splitting
-            let totalSpend = 0;
-            let balances = {};
-            groupMembers.forEach(m => balances[m.name] = 0);
-
-            const feed = document.getElementById('activity-feed');
-            feed.innerHTML = '';
-
-            const expArr = Object.entries(expenses).reverse();
-            expArr.forEach(([key, e]) => {
-                const amount = parseFloat(e.amount);
-                if (e.type === 'settlement') {
-                    balances[e.payer] -= amount;
-                } else if (e.type === 'announcement') {
-                    // System Notification in timeline
-                } else {
-                    totalSpend += amount;
-                    const split = amount / (e.involved?.length || 1);
-                    e.involved?.forEach(name => balances[name] += split);
-                }
-
-                // UI Feed Item
-                const isSystem = e.type === 'announcement';
-                feed.innerHTML += `
-                    <div class="p-6 silk-card ${isSystem ? 'bg-indigo-50 border-indigo-100' : ''} flex justify-between items-center">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl ${isSystem ? 'bg-indigo-600' : 'bg-gray-100'} flex items-center justify-center text-white">
-                                <i class="fa-solid ${isSystem ? 'fa-bullhorn' : 'fa-receipt text-gray-400'}"></i>
-                            </div>
-                            <div>
-                                <h5 class="font-black text-sm">${e.title}</h5>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase">${e.date} • by ${e.by}</p>
-                            </div>
-                        </div>
-                        <p class="text-xl font-black ${isSystem ? 'text-indigo-600' : 'text-gray-900'}">₹${amount}</p>
+            if (type === 'modal-create') {
+                content.innerHTML = `
+                    <h3 class="text-2xl font-black mb-6 text-center">Create Circle</h3>
+                    <input type="text" id="new-circle-name" placeholder="E.g. Goa Trip 2026" class="w-full bg-slate-50 p-4 rounded-2xl mb-6 border-none outline-none font-bold">
+                    <div class="flex gap-2">
+                        <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
+                        <button onclick="finalizeCircleCreation()" class="flex-1 btn-premium py-4">Create</button>
                     </div>
                 `;
-            });
-
-            document.getElementById('grand-total').innerText = "₹" + totalSpend.toLocaleString();
-
-            // Render Member Stats
-            const stats = document.getElementById('stats-grid');
-            stats.innerHTML = groupMembers.map((m, i) => `
-                <div class="silk-card p-6 text-center">
-                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2">${m.name}</p>
-                    <p class="text-2xl font-black">₹${Math.round(balances[m.name])}</p>
-                </div>
-            `).join('');
-
-            // Fill log expense selectors
-            document.getElementById('split-selectors').innerHTML = groupMembers.map(m => `
-                <button onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white');" 
-                        class="chip px-4 py-2 rounded-xl text-xs font-bold border border-gray-100 bg-white" data-name="${m.name}">${m.name}</button>
-            `).join('');
-        }
-
-        /* 5. ADMIN COMMAND CENTER ENGINE */
-        function initAdminPanel() {
-            // Aggregate Data
-            db.ref('groups').on('value', snap => {
-                const groups = snap.val() || {};
-                const groupKeys = Object.keys(groups);
-                let totalUsers = 0;
-                let topGroup = { name: 'None', count: 0 };
-
-                groupKeys.forEach(k => {
-                    const count = groups[k].members?.length || 0;
-                    totalUsers += count;
-                    if (count > topGroup.count) topGroup = { name: groups[k].name, count: count };
-                });
-
-                document.getElementById('admin-total-groups').innerText = groupKeys.length;
-                document.getElementById('admin-total-users').innerText = totalUsers;
-                document.getElementById('admin-top-group').innerText = topGroup.name;
-            });
-
-            // Subscription Requests Listener
-            db.ref('subscription_requests').on('value', snap => {
-                const list = document.getElementById('admin-sub-list');
-                const countBadge = document.getElementById('sub-req-count');
-                list.innerHTML = '';
-                
-                if (!snap.exists()) {
-                    list.innerHTML = '<p class="text-center py-10 text-gray-400 font-bold">No pending requests</p>';
-                    countBadge.innerText = 0;
-                    return;
-                }
-
-                countBadge.innerText = Object.keys(snap.val()).length;
-
-                snap.forEach(reqSnap => {
-                    const r = reqSnap.val();
-                    list.innerHTML += `
-                        <div class="p-5 silk-card bg-white border-2 border-indigo-50">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="font-black text-sm">${r.userName}</h4>
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">${r.userEmail}</p>
-                                </div>
-                                <span class="bg-indigo-600 text-white text-[8px] px-2 py-1 rounded font-black">${r.tier}</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-xl mb-4 text-xs font-mono break-all">${r.txId}</div>
-                            <div class="flex gap-2">
-                                <button onclick="resolveSubscription('${reqSnap.key}', '${r.uid}', true, '${r.tier}')" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase">Approve</button>
-                                <button onclick="resolveSubscription('${reqSnap.key}', '${r.uid}', false)" class="flex-1 py-3 bg-red-50 text-red-500 rounded-xl text-[10px] font-black uppercase">Deny</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
-
-        async function resolveSubscription(reqKey, uid, approve, tier) {
-            if (approve) {
-                // 1. Activate Sub
-                await db.ref(`active_subscriptions/${uid}`).set({ tier: tier, date: new Date().toLocaleDateString() });
-                
-                // 2. Notify in all groups user belongs to (Simplified: post to system log)
-                await db.ref('announcements').push({
-                    text: `Congratulations! A user has just upgraded to ${tier} Pro!`,
-                    type: 'system'
-                });
-
-                showToast(`Sub Activated for UID: ${uid.substring(0,5)}...`);
-            } else {
-                showToast("Request Rejected", "error");
+            } else if (type === 'modal-join') {
+                content.innerHTML = `
+                    <h3 class="text-2xl font-black mb-6 text-center">Join Circle</h3>
+                    <input type="text" id="join-id" placeholder="ENTER CIRCLE ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-6 border-none outline-none font-black text-center uppercase tracking-widest">
+                    <div class="flex gap-2">
+                        <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
+                        <button onclick="finalizeJoinRequest()" class="flex-1 btn-premium py-4 text-xs">Send Request</button>
+                    </div>
+                `;
             }
-            // Clear request
-            await db.ref(`subscription_requests/${reqKey}`).remove();
         }
 
-        function postAnnouncement() {
-            const txt = document.getElementById('announcement-input').value.trim();
-            if (!txt) return;
-            db.ref('announcements').push({
-                text: txt,
-                by: 'System Admin',
-                date: new Date().toLocaleDateString()
-            });
-            document.getElementById('announcement-input').value = '';
-            showToast("Global Broadcast Sent!");
+        async function finalizeCircleCreation() {
+            const name = document.getElementById('new-circle-name').value.trim();
+            if (!name) return;
+
+            const id = "PRO-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            const newGroup = {
+                name: name,
+                admin: auth.currentUser.email.toLowerCase(),
+                members: [{
+                    name: auth.currentUser.displayName.split(' ')[0],
+                    email: auth.currentUser.email.toLowerCase()
+                }]
+            };
+
+            await db.ref(`groups/${id}`).set(newGroup);
+            closeModal();
+            showToast("Circle Created!");
         }
 
-        function listenForAnnouncements() {
-            db.ref('announcements').limitToLast(1).on('child_added', snap => {
-                const a = snap.val();
-                const bar = document.getElementById('global-announcement');
-                document.getElementById('announcement-text').innerText = a.text;
-                bar.classList.remove('hidden');
-                setTimeout(() => bar.classList.add('hidden'), 10000);
-            });
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
         }
 
-        /* 6. UPGRADE FLOW */
-        let activeUpgrade = null;
-        function requestUpgrade(tier, price) {
-            activeUpgrade = { tier, price };
-            const upi = `upi://pay?pa=akhilgoel985-2@okaxis&pn=Akhil%20Goel&am=${price}&cu=INR&tn=TripSplitPro_${tier}`;
-            document.getElementById('payment-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upi)}`;
-            document.getElementById('pay-amt').innerText = `₹${price}`;
-            document.getElementById('payment-box').classList.remove('hidden');
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        }
-
-        async function submitSubRequest() {
-            const tx = document.getElementById('tx-id').value.trim();
-            if (!tx) return showToast("Enter Transaction ID", "error");
-
-            await db.ref('subscription_requests').push({
-                uid: auth.currentUser.uid,
-                userName: auth.currentUser.displayName,
-                userEmail: auth.currentUser.email,
-                tier: activeUpgrade.tier,
-                txId: tx,
-                status: 'pending'
-            });
-
-            showToast("Request Submitted! Verification takes 1-2 hours.");
-            document.getElementById('payment-box').classList.add('hidden');
-            document.getElementById('tx-id').value = '';
-        }
-
-        /* UTILS */
-        function toggleLogin(show) {
-            document.getElementById('login-container').classList.toggle('hidden', !show);
-            document.getElementById('group-discovery').classList.toggle('hidden', show);
-        }
-
-        window.logExpense = () => {
-            const t = document.getElementById('bill-title').value;
-            const a = document.getElementById('bill-amount').value;
-            const inv = Array.from(document.querySelectorAll('#split-selectors .bg-indigo-600')).map(b => b.dataset.name);
-            
-            if (!t || !a || inv.length === 0) return showToast("Fill all fields", "error");
-
-            db.ref(`groups/${currentGroupId}/expenses`).push({
-                title: t,
-                amount: a,
-                involved: inv,
-                by: auth.currentUser.displayName.split(' ')[0],
-                date: new Date().toLocaleDateString(),
-                type: 'expense'
-            });
-
-            document.getElementById('bill-title').value = '';
-            document.getElementById('bill-amount').value = '';
-            showToast("Transaction Logged");
-        };
-
-        window.copyGroupId = () => {
+        function copyID() {
             navigator.clipboard.writeText(currentGroupId);
             showToast("ID Copied to Clipboard");
-        };
+        }
 
-        window.signOutNow = () => auth.signOut().then(() => location.reload());
-        document.getElementById('google-login-btn').onclick = () => auth.signInWithPopup(provider);
+        function signOut() {
+            auth.signOut().then(() => location.reload());
+        }
 
-        // Pre-initialization
-        showView('main-dashboard');
+        /* --- Startup --- */
+        showView('view-dashboard');
 
     </script>
 </body>
