@@ -183,7 +183,7 @@
     <div id="toast-wrapper" class="fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex flex-col gap-3 pointer-events-none"></div>
 
     <div id="auth-screen" class="fixed inset-0 z-[600] bg-white flex items-center justify-center p-6 overflow-hidden">
-        <div id="login-module" class="w-full max-w-sm text-center">
+        <div id="login-module" class="w-full max-sm text-center">
             <div class="mb-12 relative inline-block">
                 <div class="w-28 h-28 bg-indigo-600 rounded-[2.8rem] mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-indigo-200 animate-bounce-slow">
                     <i class="fa-solid fa-cloud-bolt text-white text-5xl"></i>
@@ -257,6 +257,7 @@
                     </div>
                 </div>
                 <div>
+                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] leading-none mb-1">TripSplit</p>
                     <h3 id="active-circle-title" class="text-xl font-extrabold text-slate-900 leading-none mb-1.5">Loading Circle...</h3>
                     <div class="flex items-center gap-3">
                         <p onclick="copyID()" class="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1 cursor-pointer bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100">
@@ -1127,6 +1128,40 @@
             }
         }
 
+        /** JOIN LOGIC (DEBUGGED & MERGED) **/
+        async function commitJoinRequest() {
+            const id = document.getElementById('join-id-input').value.trim().toUpperCase();
+            if(!id) return showToast("Enter a valid ID", "error");
+
+            try {
+                const snap = await db.ref(`groups/${id}`).once('value');
+                if(!snap.exists()) return showToast("Circle not found", "error");
+
+                const group = snap.val();
+                const members = group.members || [];
+                const userEmail = AppState.user.email.toLowerCase();
+
+                // If already a member, just switch to it
+                if(members.some(m => m.email.toLowerCase() === userEmail)) {
+                    closeModal();
+                    return activateCircle(id);
+                }
+
+                // Add to member list
+                members.push({
+                    name: AppState.user.displayName.split(' ')[0],
+                    email: userEmail
+                });
+
+                await db.ref(`groups/${id}/members`).set(members);
+                showToast("Integration successful!");
+                closeModal();
+                activateCircle(id);
+            } catch (err) {
+                showToast("Cloud connection failed", "error");
+            }
+        }
+
         async function commitCircleCreation() {
             const name = document.getElementById('new-circle-name').value.trim();
             if(!name) return;
@@ -1145,6 +1180,7 @@
             await db.ref(`groups/${id}`).set(payload);
             closeModal();
             showToast(`Circle ${name} established.`);
+            activateCircle(id);
         }
 
         function closeModal() {
