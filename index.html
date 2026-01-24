@@ -265,33 +265,32 @@
             <div id="view-plans" class="view-pane">
                 <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
                     <div class="silk-card p-10 text-center border-2 border-transparent">
-                        <h4 class="font-black text-slate-400 uppercase text-xs mb-4">Cloud Starter</h4>
-                        <h2 class="text-4xl font-black mb-8 text-slate-900">₹0 <span class="text-xs text-slate-400">/mo</span></h2>
+                        <h4 class="font-black text-slate-400 uppercase text-xs mb-4">Lite Trip (Starter)</h4>
+                        <h2 class="text-4xl font-black mb-8 text-slate-900">₹10 <span class="text-xs text-slate-400">/trip</span></h2>
                         <ul class="text-left space-y-4 mb-10 text-sm font-bold text-slate-500">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Local Sync</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> 1 Group</li>
                             <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-emerald-500"></i> Max 5 Nodes</li>
                         </ul>
-                        <button class="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase text-xs cursor-default">Current Tier</button>
+                        <button onclick="triggerPayment('Starter', 10)" class="w-full btn-action bg-slate-500">Buy Starter</button>
                     </div>
                     <div class="silk-card p-10 text-center border-indigo-500 border-2 scale-105 shadow-2xl relative">
                         <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-black px-4 py-1 rounded-full uppercase">Professional</div>
-                        <h4 class="font-black text-indigo-600 uppercase text-xs mb-4">Elite Cloud</h4>
-                        <h2 class="text-4xl font-black mb-8 text-slate-900">₹100 <span class="text-xs text-slate-400">/mo</span></h2>
+                        <h4 class="font-black text-indigo-600 uppercase text-xs mb-4">Voyager (Pro)</h4>
+                        <h2 class="text-4xl font-black mb-8 text-slate-900">₹25 <span class="text-xs text-slate-400">/trip</span></h2>
                         <ul class="text-left space-y-4 mb-10 text-sm font-bold text-slate-500">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-indigo-500"></i> Global Scale</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-indigo-500"></i> Unlimited Nodes</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-indigo-500"></i> Enterprise Stats</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-indigo-500"></i> 2 Groups</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-indigo-500"></i> Max 10 Nodes</li>
                         </ul>
-                        <button onclick="triggerPayment('Pro', 100)" class="w-full btn-action">Upgrade to Pro</button>
+                        <button onclick="triggerPayment('Pro', 25)" class="w-full btn-action">Buy Pro</button>
                     </div>
                     <div class="silk-card p-10 text-center bg-slate-900 text-white border-none shadow-2xl">
                         <h4 class="font-black opacity-50 uppercase text-xs mb-4">Enterprise</h4>
-                        <h2 class="text-4xl font-black mb-8">₹250 <span class="text-xs opacity-50">/mo</span></h2>
+                        <h2 class="text-4xl font-black mb-8">₹50 <span class="text-xs opacity-50">/trip</span></h2>
                         <ul class="text-left space-y-4 mb-10 text-sm font-bold opacity-60">
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> 24/7 Priority Support</li>
-                            <li class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> Advanced Security</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> Unlimited Groups</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> Unlimited Nodes</li>
                         </ul>
-                        <button onclick="triggerPayment('Elite', 250)" class="w-full py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs">Join Elite</button>
+                        <button onclick="triggerPayment('Unlimited', 50)" class="w-full py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs">Buy Unlimited</button>
                     </div>
                 </div>
                 
@@ -315,7 +314,7 @@
                     <h2 id="profile-full-name" class="text-4xl font-black text-slate-900 mb-2">...</h2>
                     <p id="profile-email-label" class="text-slate-400 font-bold mb-8 italic">...</p>
                     <div id="status-chip" class="inline-flex items-center gap-3 px-8 py-2.5 bg-slate-100 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500">
-                        <span class="w-2 h-2 bg-slate-400 rounded-full"></span> Basic User Node
+                        <span class="w-2 h-2 bg-slate-400 rounded-full"></span> No Active Plan
                     </div>
                 </div>
 
@@ -453,7 +452,54 @@
         const provider = new firebase.auth.GoogleAuthProvider();
 
         const GLOBAL_ADMIN = "akhilgoel985@gmail.com";
-        const AppState = { user: null, activeCircleId: null, circleData: null, charts: {}, activeView: 'dashboard' };
+        const AppState = { user: null, activeCircleId: null, circleData: null, charts: {}, activeView: 'dashboard', activePlan: null };
+
+        /** * SUBSCRIPTION ENGINE CORE */
+        const SUBSCRIPTION_LIMITS = {
+            'Starter': { groups: 1, members: 5 },
+            'Pro':     { groups: 2, members: 10 },
+            'Unlimited': { groups: Infinity, members: Infinity }
+        };
+
+        async function getActivePlan() {
+            if (!AppState.user) return null;
+            const snap = await db.ref(`active_subscriptions/${AppState.user.uid}`).once('value');
+            return snap.exists() ? snap.val().tier : null;
+        }
+
+        async function countUserGroups() {
+            const snap = await db.ref('groups').once('value');
+            const groups = snap.val() || {};
+            let count = 0;
+            Object.values(groups).forEach(g => {
+                if (g.admin && g.admin.toLowerCase() === AppState.user.email.toLowerCase()) count++;
+            });
+            return count;
+        }
+
+        async function checkGroupLimit() {
+            const userPlan = await getActivePlan(); 
+            if (!userPlan) {
+                showToast("Access Denied: Please select a subscription plan first.", "error");
+                navigate('plans');
+                return false;
+            }
+            const currentGroups = await countUserGroups();
+            if (currentGroups >= SUBSCRIPTION_LIMITS[userPlan].groups) {
+                showToast("You are exceeding your current subscription plan limits.", "error");
+                return false;
+            }
+            return true;
+        }
+
+        function checkMemberLimit(currentCount, plan) {
+            if (!plan) return false;
+            if (currentCount >= SUBSCRIPTION_LIMITS[plan].members) {
+                showToast("Upgrade your plan to unlock more features.", "error");
+                return false;
+            }
+            return true;
+        }
 
         // Real-time Auth Persistence
         auth.onAuthStateChanged(user => {
@@ -749,6 +795,10 @@
         async function commitCircleCreation() {
             const name = document.getElementById('new-circle-name').value.trim();
             if(!name) return showToast("Designation Required", "error");
+
+            /** Limit Check */
+            const canCreate = await checkGroupLimit();
+            if (!canCreate) return;
             
             const id = "PRO-" + Math.random().toString(36).substring(2,7).toUpperCase();
             await db.ref(`groups/${id}`).set({ 
@@ -769,6 +819,14 @@
             const members = snap.val().members || [];
             if(members.some(m => m.email.toLowerCase() === AppState.user.email.toLowerCase())) return showToast("Node Already Integrated");
             
+            /** Member Limit Check for the Group Creator's Plan */
+            const creatorEmail = snap.val().admin;
+            // Note: Since subscription is tied to user, we check limits based on the admin of the group
+            const creatorSnap = await db.ref('users').orderByChild('email').equalTo(creatorEmail).once('value');
+            // Simplified: Enforce member limit based on current group size and active plan
+            const planTier = await getActivePlan();
+            if(!checkMemberLimit(members.length, planTier)) return;
+
             members.push({ name: AppState.user.displayName.split(' ')[0], email: AppState.user.email.toLowerCase() });
             await db.ref(`groups/${id}/members`).set(members);
             closeModal();
@@ -800,6 +858,10 @@
             const members = AppState.circleData.members || [];
             if(members.some(m => m.email === email)) return showToast("Node Exists", "error");
             
+            /** Member Limit Check */
+            const planTier = await getActivePlan();
+            if(!checkMemberLimit(members.length, planTier)) return;
+
             members.push({ name, email });
             await db.ref(`groups/${AppState.activeCircleId}/members`).set(members);
             showToast(`${name} Synced to Circle`);
@@ -895,6 +957,7 @@
             document.getElementById('upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upi)}`;
             document.getElementById('pay-amt-display').innerText = `Amount: ₹${price}`;
             document.getElementById('payment-module').classList.remove('hidden');
+            AppState.pendingTier = tier; // Temporary storage for verification
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
@@ -903,7 +966,7 @@
             if(!ref) return showToast("Ref ID Required", "error");
             await db.ref('subscription_requests').push({ 
                 uid: AppState.user.uid, email: AppState.user.email, name: AppState.user.displayName, 
-                ref, status: 'pending', at: Date.now() 
+                ref, tier: AppState.pendingTier, status: 'pending', at: Date.now() 
             });
             showToast("Request Deployed for Verification");
             document.getElementById('payment-module').classList.add('hidden');
@@ -919,15 +982,15 @@
                 s.forEach(child => {
                     const r = child.val();
                     q.innerHTML += `<div class="p-6 bg-slate-50 rounded-3xl flex justify-between items-center border animate-fade">
-                        <div><p class="font-black text-sm text-slate-800 uppercase">${r.name}</p><p class="text-[10px] font-bold text-slate-400">${r.ref}</p></div>
-                        <button onclick="resolveSub('${child.key}','${r.uid}',true)" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"><i class="fa-solid fa-check"></i></button>
+                        <div><p class="font-black text-sm text-slate-800 uppercase">${r.name}</p><p class="text-[10px] font-bold text-slate-400">${r.ref} (${r.tier})</p></div>
+                        <button onclick="resolveSub('${child.key}','${r.uid}',true,'${r.tier}')" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"><i class="fa-solid fa-check"></i></button>
                     </div>`;
                 });
             });
         }
 
-        async function resolveSub(key, uid, ok) {
-            if(ok) await db.ref(`active_subscriptions/${uid}`).set({ tier: 'Pro', since: Date.now() });
+        async function resolveSub(key, uid, ok, tier) {
+            if(ok) await db.ref(`active_subscriptions/${uid}`).set({ tier: tier, since: Date.now() });
             await db.ref(`subscription_requests/${key}`).remove();
             showToast("Subscriber Node Authorized");
         }
@@ -955,9 +1018,13 @@
         function initSubWatcher(uid) {
             db.ref(`active_subscriptions/${uid}`).on('value', s => {
                 if(s.exists()) {
-                    document.getElementById('status-chip').innerText = "PRO CLOUD ACTIVE";
+                    const tier = s.val().tier;
+                    AppState.activePlan = tier;
+                    document.getElementById('status-chip').innerText = `${tier.toUpperCase()} CLOUD ACTIVE`;
                     document.getElementById('status-chip').className = "inline-flex items-center gap-3 px-8 py-2.5 bg-indigo-600 text-white rounded-full text-[11px] font-black uppercase tracking-widest";
                     document.getElementById('pro-badge').classList.remove('hidden');
+                } else {
+                    AppState.activePlan = null;
                 }
             });
         }
